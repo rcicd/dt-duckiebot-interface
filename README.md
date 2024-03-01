@@ -1,6 +1,5 @@
-# This repo is the driver pack designed for duckiebot hardware, it supports Jetson Nano version, as well as the RaspberryPI version. 
+# This repo contains ros package of the driver pack designed for duckiebot hardware, it supports Jetson Nano version, as well as the RaspberryPI version. 
 ## All Python dependencies are mentioned in dependencies-py3.txt (non-duckietown packages only) and dependencies-py3.dt.txt (duckietown packages only)
-### All necessary libraries are in the packages directory 
 
 1. Jetson.GPIO==2.0.20                    -- GPIO management library for Jetson Nano
 2. RPi.GPIO==0.7.1                        -- GPIO management library for RaspberryPI
