@@ -1,12 +1,26 @@
-# ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
+from setuptools import setup
 
-from distutils.core import setup
-from catkin_pkg.python_setup import generate_distutils_setup
+package_name = 'adafruit_drivers'
+packages = [
+    # 'Adafruit_GPIO',
+    'Adafruit_I2C',
+    # 'Adafruit_MotorHAT',
+    'Adafruit_PWM_Servo_Driver'
+]
+package_dir = {'': 'include'}
 
-# fetch values from package.xml
-setup_args = generate_distutils_setup(
-    packages=["Adafruit_GPIO", "Adafruit_I2C", "Adafruit_MotorHAT", "Adafruit_PWM_Servo_Driver"],
-    package_dir={"": "include"},
+setup(
+    name=package_name,
+    version='1.0.0',
+    packages=packages,
+    package_dir={'': 'include'},
+    install_requires=['setuptools'],
+    description='Module containing all used drivers.',
+    author='Dmitry Yershov',
+    author_email='yershov@mit.edu',
+    keywords=['ROS', 'ROS2'],
+    license='GPLv3',
+    entry_points={
+        'console_scripts': [],
+    },
 )
-
-setup(**setup_args)

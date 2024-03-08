@@ -1,11 +1,17 @@
-## ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
-from distutils.core import setup
-from catkin_pkg.python_setup import generate_distutils_setup
+from setuptools import setup
 
-# fetch values from package.xml
-setup_args = generate_distutils_setup(
-    packages=["hat_driver"],
-    package_dir={"": "include"},
+package_name = 'hat_driver'
+packages = ['hat_driver']
+package_dir = {'': 'include'}
+
+setup(
+    name=package_name,
+    version='1.0.0',
+    packages=packages,
+    package_dir=package_dir,
+    package_data={package_name: ['package.xml']},
+    description='An interface to the DTHUT board',
+    author='Andrea F. Daniele',
+    author_email='afdaniele@ttic.edu',
+    license='GPLv3',
 )
-
-setup(**setup_args)

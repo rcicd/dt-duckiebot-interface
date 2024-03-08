@@ -21,12 +21,13 @@ fi
 dt-set-module-healthy
 
 # launching app
-dt-exec roslaunch --wait \
+dt-exec ros2 launch \
     duckiebot_interface all_drivers.launch \
     veh:="$VEHICLE_NAME" \
     robot_type:="$ROBOT_TYPE" \
     robot_configuration:="$ROBOT_CONFIGURATION"
 
+ros2 launch example_robot_bringup bringup.launch.py
 
 # ----------------------------------------------------------------------------
 # YOUR CODE ABOVE THIS LINE

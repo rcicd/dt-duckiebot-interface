@@ -1,10 +1,18 @@
-# # ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
-from distutils.core import setup
-from catkin_pkg.python_setup import generate_distutils_setup
+from setuptools import setup
 
-setup_args = generate_distutils_setup(
-    packages=['dt_duckiebot_hardware_tests'],
-    package_dir={'': 'include'},
+package_name = 'duckiebot_interface'
+packages = ['dt_duckiebot_hardware_tests']
+package_dir = {'': 'include'}
+
+setup(
+    name=package_name,
+    version='1.0.0',
+    packages=packages,
+    package_dir=package_dir,
+    package_data={package_name: ['package.xml']},
+    description='The duckiebot_interface meta package',
+    maintainer='Mack',
+    maintainer_email='mack@duckietown.org',
+    license='GPLv3',
 )
 
-setup(**setup_args)

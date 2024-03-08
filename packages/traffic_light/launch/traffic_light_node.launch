@@ -1,17 +1,19 @@
 <launch>
-  <arg name="veh" default="pontiac" doc="Name of vehicle. ex: megaman"/>
+  <arg name="veh" default="pontiac" description="Name of vehicle. ex: megaman"/>
 
-  <arg name="pkg_name" value="traffic_light"/>
+  <arg name="pkg_name"/>
+  <let name="pkg_name" value="traffic_light"/>
   <arg name="node_name" default="traffic_light_node"/>
-  <arg name="param_file_name" default="TL_protocol" doc="Specify a param file. ex:megaman." />
+  <arg name="param_file_name" default="TL_protocol" description="Specify a param file. ex:megaman." />
 
   <arg name="protocol_node_name" default="led_emitter_node"/>
   <arg name="protocol_file" default="LED_protocol"/>
 
-  <group ns="$(arg veh)">
-    <node  name="$(arg node_name)" pkg="$(arg pkg_name)" type="$(arg node_name).py" output="screen">
-      <rosparam command="load" file="$(find traffic_light)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
-      <rosparam command="load" file="$(find led_emitter)/config/$(arg protocol_node_name)/$(arg protocol_file).yaml"/>
+  <group>
+    <push_ros_namespace namespace="$(arg veh)"/>
+    <node name="$(arg node_name)" pkg="$(arg pkg_name)" exec="$(arg node_name).py" output="screen">
+      <param from="$(find traffic_light)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
+      <param from="$(find led_emitter)/config/$(arg protocol_node_name)/$(arg protocol_file).yaml"/>
     </node>
   </group>
 </launch>
