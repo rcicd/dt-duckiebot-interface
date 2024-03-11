@@ -1,10 +1,10 @@
 <launch>
-	<arg name="veh" description="Name of vehicle. ex: megaman"/>
+	<let name="veh" value="$(env VEH '')"/>
 	<arg name="node_name" default="joy_node"/>
-	<arg name="param_file_name" default="default" description="Specify a param file. ex:megaman"/>
+	<arg name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
 
 	<!-- This launches a node in /opt/ros/ROS_DISTRO/share/joy -->
-	<node namespace="$(arg veh)" pkg="joy" exec="$(arg node_name)" name="$(arg node_name)" output="screen" required="true">
-		<param from="$(find joystick)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
+	<node namespace="$(var veh)" pkg="joy" exec="$(var node_name)" name="$(var node_name)" output="screen"> required="true">
+		<param from="$(find-pkg-share joystick)/config/$(var node_name)/$(var param_file_name).yaml"/>
 	</node>
 </launch>

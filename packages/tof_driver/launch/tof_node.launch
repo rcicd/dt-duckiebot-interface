@@ -1,19 +1,19 @@
 <launch>
-    <arg name="veh" description="Specify a vehicle name"/>
-    <arg name="name" description="Specify a sensor name, ex: `front_center`"/>
+    <let name="veh" value="$(env VEH '')"/>
+<!--     <arg name="name" description="Specify a sensor name, ex: `front_center`"/> -->
+    <let name="name" value="$(env NAME '')"/>
 
-    <arg name="pkg_name"/>
     <let name="pkg_name" value="tof_driver"/>
-    <arg name="node_name"/>
     <let name="node_name" value="tof_node"/>
     <arg name="required" default="false"/>
 
     <group>
-        <push_ros_namespace namespace="$(arg veh)"/>
-        <node pkg="$(arg pkg_name)" name="$(arg name)_tof_driver_node" exec="$(arg node_name).py"
-              output="screen" required="$(arg required)">
-            <param name="veh" value="$(arg veh)" />
-            <param from="$(find tof_driver)/config/$(arg node_name)/$(arg name).yaml"/>
+        <remap from="front_center_tof_driver_node/fragments" to="display_driver_node/fragments"/>
+        <push_ros_namespace namespace="$(var veh)"/>
+        <node pkg="$(var pkg_name)" name="$(var name)_tof_driver_node" exec="$(var node_name).py"
+              output="screen" required="$(var required)">
+            <param name="veh" value="$(var veh)" />
+            <param from="$(find-pkg-share tof_driver)/config/$(var node_name)/$(var name).yaml"/>
         </node>
     </group>
 </launch>

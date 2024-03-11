@@ -27,7 +27,8 @@ dt-exec ros2 launch \
     robot_type:="$ROBOT_TYPE" \
     robot_configuration:="$ROBOT_CONFIGURATION"
 
-ros2 launch example_robot_bringup bringup.launch.py
+/bin/bash
+#ros launch example_robot_bringup bringup.launch.py
 
 # ----------------------------------------------------------------------------
 # YOUR CODE ABOVE THIS LINE

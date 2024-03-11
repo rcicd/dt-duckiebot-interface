@@ -6,163 +6,136 @@
          description="The type of the robot, e.g., duckiebot, watchtower, traffic_light, ..."/>
     <arg name="robot_configuration"
          description="The configuration of the robot. For example DB19, DB20, ..."/>
-    <arg name="robot_xurdf"
-         description="Location of the URDF XACRO file for the robot type"/>
-    <let name="robot_xurdf" value="$(find duckiebot_interface)/urdf/$(arg robot_type).urdf.xacro"/>
-    <arg name="camera_disabled" default="$(optenv DT_SENSOR_CAMERA_DISABLE 0)"
+    <let name="robot_xurdf" value="$(find-pkg-share duckiebot_interface)/urdf/$(var robot_type).urdf.xacro"/>
+    <arg name="camera_disabled" default="$(env DT_SENSOR_CAMERA_DISABLE 0)"
          description="If 1 the camera node is not started."/>
          
 
     <!-- Robot Descriptor: takes a XACRO file, makes a URDF out of it and publishes it -->
-    <param name="robot_description"
-           value="$(command 'xacro '$(arg robot_xurdf)' model:=$(arg robot_configuration) veh:=$(arg veh)' )"/>
-    <node namespace="$(arg veh)" pkg="robot_state_publisher" exec="robot_state_publisher"
+    <node pkg="xacro" exec="xacro" name="xacro">
+        <param name="robot_description"
+               value="$(command 'xacro \'$(var robot_xurdf)\' model:=$(var robot_configuration) veh:=$(var veh)')"/>
+    </node>
+    <node namespace="$(var veh)" pkg="robot_state_publisher" exec="robot_state_publisher"
           name="robot_state_publisher"/>
 
     <!-- Camera Node: reads frames from a physical camera and produces ROS messages -->
-    <group unless="$(arg camera_disabled)">
-        <group if="$(eval arg('robot_type') in ['duckiebot', 'watchtower', 'traffic_light', 'duckiedrone'])">
-            <include file="$(find camera_driver)/launch/camera_node.launch">
-                <arg name="veh"/>
-                <let name="veh" value="$(arg veh)"/>
-                <arg name="param_file_name"/>
-                <let name="param_file_name" value="$(arg robot_type)"/>
-            </include>
+    <group unless="$(var camera_disabled)">
+        <group if="$(eval '\'$(var robot_type)\' in [\'duckiebot\', \'watchtower\', \'traffic_light\', \'duckiedrone\']')">
+            <set_env name="VEH" value="$(var veh)"/>
+            <set_env name="PARAM_FILE_NAME" value="$(var robot_type)"/>
+            <include file="$(find-pkg-share camera_driver)/launch/camera_node.launch"/>
+            <unset_env name="VEH"/>
+            <unset_env name="PARAM_FILE_NAME"/>
         </group>
     </group>
 
     <!-- LED Driver: reads ROS messages and commands the LEDs -->
-    <group if="$(eval arg('robot_type') in ['duckiebot', 'traffic_light'])">
+    <group if="$(eval '\'$(var robot_type)\' in [\'duckiebot\', \'traffic_light\']')">
 <!--         <remap from="led_driver_node/led_pattern" to="led_emitter_node/led_pattern"/> -->
-        <include file="$(find led_driver)/launch/led_driver_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-            <arg name="robot_type"/>
-            <let name="robot_type" value="$(arg robot_type)"/>
-        </include>
+        <set_env name="VEH" value="$(var veh)"/>
+        <set_env name="PARAM_FILE_NAME" value="$(var robot_type)"/>
+        <include file="$(find-pkg-share led_driver)/launch/led_driver_node.launch"/>
+        <unset_env name="VEH"/>
+        <unset_env name="PARAM_FILE_NAME"/>
     </group>
 
     <!-- Joystick: reads from a physical joystick and produces ROS messages -->
-    <group if="$(eval arg('robot_type') == 'duckiebot')">
-        <include file="$(find joystick)/launch/joystick_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-            <arg name="param_file_name"/>
-            <let name="param_file_name" value="$(arg param_file_name)"/>
-        </include>
+    <group if="$(eval '\'$(var robot_type)\' == \'duckiebot\'')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <set_env name="PARAM_FILE_NAME" value="$(var param_file_name)"/>
+        <include file="$(find-pkg-share joystick)/launch/joystick_node.launch"/>
 
         <!-- Wheel Drivers: reads ROS messages and spins the motors -->
-        <include file="$(find wheels_driver)/launch/wheels_driver_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-            <arg name="param_file_name"/>
-            <let name="param_file_name" value="$(arg param_file_name)"/>
-        </include>
+        <include file="$(find-pkg-share wheels_driver)/launch/wheels_driver_node.launch"/>
+        <unset_env name="VEH"/>
+        <unset_env name="PARAM_FILE_NAME"/>
     </group>
 
     <!-- Traffic Light (Traffic Light robot only): commands the LEDs of a traffic light -->
-    <group if="$(eval arg('robot_type') in ['traffic_light'])">
+    <group if="$(eval '\'$(var robot_type)\' == \'traffic_light\'')">
 <!--         <remap from="led_emitter_node/custom_pattern" to="~custom_pattern"/> -->
-        <include file="$(find traffic_light)/launch/traffic_light_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-        </include>
+        <set_env name="VEH" value="$(var veh)"/>
+        <include file="$(find-pkg-share traffic_light)/launch/traffic_light_node.launch"/>
+        <unset_env name="VEH"/>
     </group>
 
     <!-- Wheel Encoders (DB19 and above robot only): reads data from wheel encoders -->
-    <group if="$(eval arg('robot_type') == 'duckiebot' and arg('robot_configuration') != 'DB18')">
+    <group if="$(eval '\'$(var robot_type)\' == \'duckiebot\' and \'$(var robot_configuration)\' != \'DB18\'')">
         <!-- Left Wheel Encoder  -->
 <!--         <remap from="left_wheel_encoder_node/wheels_cmd_executed" -->
 <!--                to="wheels_driver_node/wheels_cmd_executed"/> -->
-        <include file="$(find wheel_encoder)/launch/wheel_encoder_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-            <arg name="wheel"/>
-            <let name="wheel" value="left"/>
-            <arg name="param_file_name"/>
-            <let name="param_file_name" value="left_wheel"/>
-        </include>
+        <set_env name="VEH" value="$(var veh)"/>
+        <set_env name="WHEEL" value="left"/>
+        <set_env name="PARAM_FILE_NAME" value="left_wheel"/>
+        <include file="$(find-pkg-share wheel_encoder)/launch/wheel_encoder_node.launch"/>
 
+        <set_env name="WHEEL" value="right"/>
+        <set_env name="PARAM_FILE_NAME" value="right_wheel"/>
         <!-- Right Wheel Encoder  -->
 <!--         <remap from="right_wheel_encoder_node/wheels_cmd_executed" -->
 <!--                to="wheels_driver_node/wheels_cmd_executed"/> -->
-        <include file="$(find wheel_encoder)/launch/wheel_encoder_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-            <arg name="wheel"/>
-            <let name="wheel" value="right"/>
-            <arg name="param_file_name"/>
-            <let name="param_file_name" value="right_wheel"/>
-        </include>
+        <include file="$(find-pkg-share wheel_encoder)/launch/wheel_encoder_node.launch"/>
+        <unset_env name="VEH"/>
+        <unset_env name="WHEEL"/>
+        <unset_env name="PARAM_FILE_NAME"/>
     </group>
 
     <!-- Time-of-Flight sensor: -->
     <!-- - DB21x: 1x ToF sensor at the Front Center      -->
-    <group if="$(eval arg('robot_configuration') in ['DB21M', 'DB21J', 'DBR4'])">
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
 <!--         <remap from="front_center_tof_driver_node/fragments" to="display_driver_node/fragments"/> -->
-        <include file="$(find tof_driver)/launch/tof_node.launch">
-            <arg name="veh">
-            <let name="veh" value="$(arg veh)"/>
-            <arg name="name"/>
-            <let name="name" value="front_center"/>
-        </include>
+       <set_env name="VEH" value="$(var veh)"/>
+       <set_env name="NAME" value="front_center"/>
+        <include file="$(find-pkg-share tof_driver)/launch/tof_node.launch"/>
+        <unset_env name="VEH"/>
+        <unset_env name="NAME"/>
     </group>
 
     <!-- OLED Display driver: -->
-    <group if="$(eval arg('robot_configuration') in ['DB21M', 'DB21J', 'DBR4'])">
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
 <!--         <remap from="display_driver_node/button" to="button_driver_node/event"/> -->
-        <include file="$(find display_driver)/launch/display_driver_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-        </include>
+        <set_env name="VEH" value="$(var veh)"/>
+        <include file="$(find-pkg-share display_driver)/launch/display_driver_node.launch"/>
+        <unset_env name="VEH"/>
     </group>
 
     <!-- Display renderers: -->
-    <group if="$(eval arg('robot_configuration') in ['DB21M', 'DB21J', 'DBR4'])">
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
+        <set_env name="VEH" value="$(var veh)"/>
         <!-- health: renders health and usage info about the robot -->
-        <include file="$(find display_renderers)/launch/health_renderer_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-        </include>
+        <include file="$(find-pkg-share display_renderers)/launch/health_renderer_node.launch"/>
         <!-- networking: renders connectivity status -->
-        <include file="$(find display_renderers)/launch/networking_renderer_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-        </include>
+        <include file="$(find-pkg-share display_renderers)/launch/networking_renderer_node.launch"/>
         <!-- robot_info: renders robot hostname, model and software firmware -->
-        <include file="$(find display_renderers)/launch/robot_info_renderer_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-        </include>
+        <include file="$(find-pkg-share display_renderers)/launch/robot_info_renderer_node.launch"/>
+        <unset_env name="VEH"/>
     </group>
 
     <!-- Button driver -->
-    <group if="$(eval arg('robot_configuration') in ['DB21M', 'DB21J', 'DBR4'])">
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
 <!--         <remap from="button_driver_node/fragments" to="display_driver_node/fragments"/> -->
-        <include file="$(find button_driver)/launch/button_driver_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-        </include>
+        <set_env name="VEH" value="$(var veh)"/>
+        <include file="$(find-pkg-share button_driver)/launch/button_driver_node.launch"/>
+        <unset_env name="VEH"/>
     </group>
 
     <!-- IMU sensor: -->
-    <group if="$(eval arg('robot_configuration') in ['DB21M', 'DB21J'])">
-        <include file="$(find imu_driver)/launch/imu_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-        </include>
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\']')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <include file="$(find-pkg-share imu_driver)/launch/imu_node.launch"/>
+        <unset_env name="VEH"/>
     </group>
 
     <!-- Robot HTTP API: provides an HTTP API through which we can control the Robot -->
-    <group if="$(eval arg('robot_type') not in ['workstation'])">
-        <include file="$(find robot_http_api)/launch/robot_http_api_node.launch">
-            <arg name="veh"/>
-            <let name="veh" value="$(arg veh)"/>
-            <arg name="robot_type"/>
-            <let name="robot_type" value="$(arg robot_type)"/>
-            <arg name="param_file_name"/>
-            <let name="param_file_name" value="$(arg param_file_name)"/>
-        </include>
+    <group if="$(eval '\'$(var robot_type)\' not in [\'workstation\']')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <set_env name="ROBOT_TYPE" value="$(var robot_type)"/>
+        <set_env name="PARAM_FILE_NAME" value="$(var param_file_name)"/>
+        <include file="$(find-pkg-share robot_http_api)/launch/robot_http_api_node.launch"/>
+        <unset_env name="VEH"/>
+        <unset_env name="ROBOT_TYPE"/>
+        <unset_env name="PARAM_FILE_NAME"/>
     </group>
 
 </launch>

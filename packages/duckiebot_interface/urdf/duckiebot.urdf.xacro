@@ -1,21 +1,17 @@
 <?xml version="1.0"?>
 <robot name="duckiebot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <!--
-    Required arguments are:
-
-        - veh:      Vehicle name (e.g., autobot04)
-        - model:    Robot configuration (e.g., DB18)
-
-    -->
+     <!--    Required arguments are                     -->
+     <!--   - veh      Vehicle name (e.g., autobot04)   -->
+     <!--   - model    Robot configuration (e.g., DB18) -->
 
     <xacro:macro name="duckiebot" params="veh model">
 
-        <!-- START: Duckiebot -->
+        <!-- START Duckiebot -->
 
         <xacro:if value="${model in ['DB18', 'DB19']}" >
 
-            <!-- START: Duckiebot: DB1X -->
+            <!-- START Duckiebot DB1X -->
 
             <xacro:property name="plate_thickness" value="0.003" />
 
@@ -211,7 +207,7 @@
                     </geometry>
                 </visual>
             </link>
-            <!-- TODO: this should not be fixed (floating), rotation should be computed from the extrinsics calibration of the camera -->
+            <!-- TODO this should not be fixed (floating), rotation should be computed from the extrinsics calibration of the camera -->
             <joint name="${veh}_camera_support_to_camera_frame" type="fixed">
                 <parent link="${veh}/camera_support" />
                 <child link="${veh}/camera_frame" />
@@ -226,13 +222,13 @@
                 <origin xyz="0.017 0 0" rpy="-${0.5 * pi} 0 -${0.5 * pi}" />
             </joint>
 
-            <!-- END: Duckiebot: DB1X -->
+            <!-- END Duckiebot DB1X -->
 
         </xacro:if>
 
         <xacro:if value="${model in ['DB21M', 'DB21J', 'DBR4']}" >
 
-            <!-- START: Duckiebot: DB21X -->
+            <!-- START Duckiebot DB21X -->
 
             <xacro:property name="plate_thickness" value="0.003" />
 
@@ -511,7 +507,7 @@
                     </geometry>
                 </visual>
             </link>
-            <!-- TODO: this should not be fixed (floating), rotation should be computed from the extrinsics calibration of the camera -->
+            <!-- TODO this should not be fixed (floating), rotation should be computed from the extrinsics calibration of the camera -->
             <joint name="${veh}_camera_support_to_camera_frame" type="fixed">
                 <parent link="${veh}/camera_support" />
                 <child link="${veh}/camera_frame" />
@@ -542,11 +538,11 @@
                 <origin xyz="0.022 0 -0.01"/>
             </joint>
 
-            <!-- END: Duckiebot: DB21X -->
+            <!-- END Duckiebot DB21X -->
 
         </xacro:if>
 
-        <!-- END: Duckiebot -->
+        <!-- END Duckiebot -->
 
     </xacro:macro>
 

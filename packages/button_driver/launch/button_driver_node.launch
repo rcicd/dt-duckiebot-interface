@@ -1,18 +1,17 @@
 <launch>
   <arg name="veh" description="Specify a vehicle name"/>
-  <arg name="pkg_name"/>
   <let name="pkg_name" value="button_driver"/>
-  <arg name="node_name"/>
   <let name="node_name" value="button_driver_node"/>
   <arg name="required" default="false"/>
   <arg name="param_file_name" default="default" description="Specify a param file. ex:megaman"/>
 
   <group>
-    <push_ros_namespace namespace="$(arg veh)"/>
-    <node pkg="$(arg pkg_name)" name="$(arg node_name)" exec="$(arg node_name).py"
-          output="screen" required="$(arg required)">
-        <param name="veh" value="$(arg veh)" />
-        <param from="$(find button_driver)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
+    <remap from="button_driver_node/fragments" to="display_driver_node/fragments"/>
+    <push_ros_namespace namespace="$(var veh)"/>
+    <node pkg="$(var pkg_name)" name="$(var node_name)" exec="$(var node_name).py"
+          output="screen" required="$(var required)">
+        <param name="veh" value="$(var veh)" />
+        <param from="$(find-pkg-share button_driver)/config/$(var node_name)/$(var param_file_name).yaml"/>
     </node>
   </group>
 </launch>

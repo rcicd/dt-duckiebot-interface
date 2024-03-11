@@ -1,18 +1,17 @@
 <launch>
-    <arg name="veh" description="Specify a vehicle name"/>
-    <arg name="pkg_name"/>
+    <let name="veh" value="$(env VEH '')"/>
     <let name="pkg_name" value="display_driver"/>
-    <arg name="node_name"/>
     <let name="node_name" value="display_driver_node"/>
     <arg name="required" default="false"/>
-    <arg name="param_file_name" default="default" description="Specify a param file. ex:megaman"/>
+    <arg name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
 
     <group>
-        <push_ros_namespace namespace="$(arg veh)"/>
-        <node pkg="$(arg pkg_name)" name="$(arg node_name)" exec="$(arg node_name).py"
-              output="screen" required="$(arg required)">
-            <param name="veh" value="$(arg veh)" />
-            <param from="$(find display_driver)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
+        <remap from="display_driver_node/button" to="button_driver_node/event"/>
+        <push_ros_namespace namespace="$(var veh)"/>
+        <node pkg="$(var pkg_name)" name="$(var node_name)" exec="$(var node_name).py"
+              output="screen" required="$(var required)">
+            <param name="veh" value="$(var veh)" />
+            <param from="$(find-pkg-share display_driver)/config/$(var node_name)/$(var param_file_name).yaml"/>
         </node>
     </group>
 </launch>

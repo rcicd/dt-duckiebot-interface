@@ -1,14 +1,14 @@
 <launch>
-	<arg name="node_name"/>
 	<let name="node_name" value="led_driver_node"/>
-	<arg name="veh" description="Name of vehicle. ex: megaman"/>
-    <arg name="param_file_name" default="default" description="Specify a param file. ex:megaman"/>
-	<arg name="robot_type" default="duckiebot" description="Type of robot"/>
+    <let name="veh" value="$(env VEH '')"/>
+    <arg name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
+    <arg name="robot_type" default="duckiebot" description="Type of robot"/>
 
 	<group>
-        <push_ros_namespace namespace="$(arg veh)"/>
-	    <node pkg="led_driver" exec="led_driver_node.py" name="$(arg node_name)" output="screen" required="true">
-			<param from="$(find led_driver)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
+	    <remap from="led_driver_node/led_pattern" to="led_emitter_node/led_pattern"/>
+        <push_ros_namespace namespace="$(var veh)"/>
+	    <node pkg="led_driver" exec="led_driver_node.py" name="$(var node_name)" output="screen" required="true">
+			<param from="$(find-pkg-share led_driver)/config/$(var node_name)/$(var param_file_name).yaml"/>
 		</node>
 	</group>
 

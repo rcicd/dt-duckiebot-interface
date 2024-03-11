@@ -1,19 +1,17 @@
 <launch>
-    <arg name="veh" description="Specify a vehicle name"/>
-    <arg name="param_file_name" default="duckiebot" description="Specify a param file. ex:megaman"/>
+    <let name="veh" value="$(env VEH '')"/>
+    <arg name="param_file_name" value="$(env PARAM_FILE_NAME 'duckiebot')"/>
 
-    <arg name="pkg_name"/>
     <let name="pkg_name" value="imu_driver"/>
-    <arg name="node_name"/>
     <let name="node_name" value="imu_node"/>
     <arg name="required" default="false"/>
 
     <group>
-        <push_ros_namespace namespace="$(arg veh)"/>
-        <node pkg="$(arg pkg_name)" name="imu_node" exec="$(arg node_name).py"
-              output="screen" required="$(arg required)">
-            <param name="veh" value="$(arg veh)"/>
-            <param from="$(find imu_driver)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
+        <push_ros_namespace namespace="$(var veh)"/>
+        <node pkg="$(var pkg_name)" name="imu_node" exec="$(var node_name).py"
+              output="screen"> required="$(var required)">
+            <param name="veh" value="$(var veh)"/>
+            <param from="$(find-pkg-share imu_driver)/config/$(var node_name)/$(var param_file_name).yaml"/>
         </node>
     </group>
 </launch>
