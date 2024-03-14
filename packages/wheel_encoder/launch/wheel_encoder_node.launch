@@ -3,14 +3,14 @@
 <!--     <arg name="wheel" description="Unique name of the wheel (e.g., left)"/> -->
     <let name="wheel" value="$(env WHEEL '')"/>
     <arg name="node_name" default="wheel_encoder_node"/>
-    <arg name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
+    <let name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
 
     <group>
         <remap from="left_wheel_encoder_node/wheels_cmd_executed" to="wheels_driver_node/wheels_cmd_executed"/>
         <remap from="right_wheel_encoder_node/wheels_cmd_executed" to="wheels_driver_node/wheels_cmd_executed"/>
         <push_ros_namespace namespace="$(var veh)"/>
-        <node pkg="wheel_encoder" exec="$(var node_name).py"
-              name="$(var wheel)_$(var node_name)" output="screen" required="true">
+        <node pkg="wheel_encoder" exec="$(var node_name).py" name="$(var wheel)_$(var node_name)" output="screen">
+<!--          required="true"> -->
             <param name="veh" value="$(var veh)"/>
             <param name="name" value="$(var wheel)"/>
             <param from="$(find-pkg-share wheel_encoder)/config/$(var node_name)/$(var param_file_name).yaml"/>

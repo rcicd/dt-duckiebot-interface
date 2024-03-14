@@ -2,13 +2,13 @@
   <let name="veh" value="$(env VEH '')"/>
   <let name="pkg_name" value="camera_driver"/>
   <arg name="node_name" default="$(env ROBOT_HARDWARE)_camera_node"/>
-<!--   <arg name="param_file_name" default="duckiebot" description="Specify a param file. ex:megaman"/> -->
   <let name="param_file_name" value="$(env PARAM_FILE_NAME duckiebot)"/>
   <arg name="required" default="false" />
 
   <group>
     <push_ros_namespace namespace="$(var veh)"/>
-    <node name="camera_node" pkg="$(var pkg_name)" exec="$(var node_name).py" respawn="true" output="screen" required="$(var required)">
+    <node name="camera_node" pkg="$(var pkg_name)" exec="$(var node_name).py" respawn="true" output="screen">
+<!--      required="$(var required)"> -->
       <param from="$(find-pkg-share camera_driver)/config/$(var node_name)/$(var param_file_name).yaml"/>
     </node>
   </group>

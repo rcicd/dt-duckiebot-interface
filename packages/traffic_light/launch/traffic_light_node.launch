@@ -3,7 +3,7 @@
 
   <let name="pkg_name" value="traffic_light"/>
   <arg name="node_name" default="traffic_light_node"/>
-  <arg name="param_file_name" value="$(env PARAM_FILE_NAME 'TL_protocol')"/>
+  <let name="param_file_name" value="$(env PARAM_FILE_NAME 'TL_protocol')"/>
 
   <arg name="protocol_node_name" default="led_emitter_node"/>
   <arg name="protocol_file" default="LED_protocol"/>

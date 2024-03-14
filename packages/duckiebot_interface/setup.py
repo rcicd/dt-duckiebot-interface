@@ -10,7 +10,7 @@ setup(
     name=package_name,
     version='1.0.0',
     packages=packages,
-    package_dir={'': 'include'},
+    # package_dir={'': 'include'},
     package_data={package_name: ['package.xml', 'launch/*.launch', 'include/**/*.py', 'urdf/*.xacro', 'images/icons/*.png']},
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),

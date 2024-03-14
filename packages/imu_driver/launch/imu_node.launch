@@ -1,6 +1,6 @@
 <launch>
     <let name="veh" value="$(env VEH '')"/>
-    <arg name="param_file_name" value="$(env PARAM_FILE_NAME 'duckiebot')"/>
+    <let name="param_file_name" value="$(env PARAM_FILE_NAME 'duckiebot')"/>
 
     <let name="pkg_name" value="imu_driver"/>
     <let name="node_name" value="imu_node"/>
@@ -8,8 +8,8 @@
 
     <group>
         <push_ros_namespace namespace="$(var veh)"/>
-        <node pkg="$(var pkg_name)" name="imu_node" exec="$(var node_name).py"
-              output="screen"> required="$(var required)">
+        <node pkg="$(var pkg_name)" name="imu_node" exec="$(var node_name).py" output="screen">
+<!--          required="$(var required)"> -->
             <param name="veh" value="$(var veh)"/>
             <param from="$(find-pkg-share imu_driver)/config/$(var node_name)/$(var param_file_name).yaml"/>
         </node>

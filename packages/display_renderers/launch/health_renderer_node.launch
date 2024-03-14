@@ -4,13 +4,12 @@
     <let name="pkg_name" value="display_renderers"/>
     <let name="node_name" value="health_renderer_node"/>
     <arg name="required" default="false"/>
-<!--     <arg name="param_file_name" default="default" description="Specify a param file. ex:megaman"/> -->
     <let name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
 
     <group>
         <push_ros_namespace namespace="$(var veh)"/>
-        <node pkg="$(var pkg_name)" name="$(var node_name)" exec="$(var node_name).py"
-              output="screen" required="$(var required)">
+        <node pkg="$(var pkg_name)" name="$(var node_name)" exec="$(var node_name).py" output="screen">
+<!--                required="$(var required)"> -->
             <remap from="$(var node_name)/fragments" to="display_driver_node/fragments"/>
             <param name="veh" value="$(var veh)" />
             <param name="assets_dir" value="$(find duckiebot_interface)/images" />

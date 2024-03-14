@@ -10,8 +10,8 @@
     <group>
         <remap from="front_center_tof_driver_node/fragments" to="display_driver_node/fragments"/>
         <push_ros_namespace namespace="$(var veh)"/>
-        <node pkg="$(var pkg_name)" name="$(var name)_tof_driver_node" exec="$(var node_name).py"
-              output="screen" required="$(var required)">
+        <node pkg="$(var pkg_name)" name="$(var name)_tof_driver_node" exec="$(var node_name).py" output="screen">
+<!--          required="$(var required)"> -->
             <param name="veh" value="$(var veh)" />
             <param from="$(find-pkg-share tof_driver)/config/$(var node_name)/$(var name).yaml"/>
         </node>
