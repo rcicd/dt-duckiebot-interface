@@ -15,11 +15,11 @@ setup(
     version='1.0.0',
     packages=packages,
     package_dir={'': 'include'},
-    package_data={package_name: ['package.xml', 'include/**/*.py']},
+    package_data={package_name: ['package.xml', 'include/*/*.py']},
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'include'), glob(os.path.join('include', '**/*.py')))
+        (os.path.join('share', package_name, 'include'), glob(os.path.join('include', '**', '*.py')))
     ],
     install_requires=['setuptools'],
     description='Module containing all used drivers.',

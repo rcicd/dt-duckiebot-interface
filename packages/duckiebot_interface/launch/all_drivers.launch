@@ -34,7 +34,7 @@
     <group if="$(eval '\'$(var robot_type)\' in [\'duckiebot\', \'traffic_light\']')">
 <!--         <remap from="led_driver_node/led_pattern" to="led_emitter_node/led_pattern"/> -->
         <set_env name="VEH" value="$(var veh)"/>
-        <set_env name="PARAM_FILE_NAME" value="$(var robot_type)"/>
+        <set_env name="PARAM_FILE_NAME" value="default"/>
         <include file="$(find-pkg-share led_driver)/launch/led_driver_node.launch"/>
         <unset_env name="VEH"/>
         <unset_env name="PARAM_FILE_NAME"/>

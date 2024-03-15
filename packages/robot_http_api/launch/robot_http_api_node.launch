@@ -3,16 +3,15 @@
     <let name="veh" value="$(env VEH '')"/>
     <arg name="node_name" default="robot_http_api_node"/>
     <let name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
-    <arg name="robot_type" description="The type of the robot, e.g., duckiebot, watchtower, traffic_light, ..."/>
     <let name="robot_type" value="$(env ROBOT_TYPE '')"/>
 
     <group>
         <push_ros_namespace namespace="$(var veh)"/>
         <node pkg="robot_http_api" exec="$(var node_name).py" name="$(var node_name)" output="screen">
 <!--          required="true"> -->
-            <remap if="$(eval '\'$(var robot_type)\' == \'duckiebot\'')" from="robot_http_api_node/estop" to="wheels_driver_node/emergency_stop"/>
-            <remap if="$(eval '\'$(var robot_type)\' == \'duckiebot\'')" from="robot_http_api_node/wheels_cmd" to="wheels_driver_node/wheels_cmd"/>
-            <remap if="$(eval '\'$(var robot_type)\' == \'duckiebot\'')" from="robot_http_api_node/shutdown_behavior" to="button_driver_node/shutdown_behavior"/>
+            <remap from="robot_http_api_node/estop" to="wheels_driver_node/emergency_stop"/>
+            <remap from="robot_http_api_node/wheels_cmd" to="wheels_driver_node/wheels_cmd"/>
+            <remap from="robot_http_api_node/shutdown_behavior" to="button_driver_node/shutdown_behavior"/>
         </node>
     </group>
 </launch>

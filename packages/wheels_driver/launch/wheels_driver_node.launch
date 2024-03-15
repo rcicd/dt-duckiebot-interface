@@ -1,9 +1,9 @@
 <launch>
     <let name="veh" value="$(env VEH '')"/>
-    <arg name="node_name" default="wheels_driver_node"/>
+<!--     <let name="node_name" value="wheels_driver_node"/> -->
     <let name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
 
-    <node namespace="$(var veh)" pkg="wheels_driver" exec="$(var node_name).py" name="$(var node_name)" output="screen">
+    <node namespace="$(var veh)" pkg="wheels_driver" exec="wheels_driver_node.py" name="wheels_driver_node" output="screen"/>
 <!--      required="true" /> -->
 
 </launch>

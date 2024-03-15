@@ -10,7 +10,6 @@
     <license>GPLv3</license>
     <depend>ament_cmake</depend>
 
-    <depend>rospy</depend>
     <depend>rclpy</depend>
 
     <export>

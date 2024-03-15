@@ -6,10 +6,10 @@
     <let name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
 
     <group>
-        <remap from="display_driver_node/button" to="button_driver_node/event"/>
         <push_ros_namespace namespace="$(var veh)"/>
         <node pkg="$(var pkg_name)" name="$(var node_name)" exec="$(var node_name).py" output="screen">
 <!--                required="$(var required)"> -->
+            <remap from="display_driver_node/button" to="button_driver_node/event"/>
             <param name="veh" value="$(var veh)" />
             <param from="$(find-pkg-share display_driver)/config/$(var node_name)/$(var param_file_name).yaml"/>
         </node>

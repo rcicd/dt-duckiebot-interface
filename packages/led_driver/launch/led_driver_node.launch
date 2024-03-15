@@ -5,10 +5,10 @@
     <arg name="robot_type" default="duckiebot" description="Type of robot"/>
 
 	<group>
-	    <remap from="led_driver_node/led_pattern" to="led_emitter_node/led_pattern"/>
         <push_ros_namespace namespace="$(var veh)"/>
 	    <node pkg="led_driver" exec="led_driver_node.py" name="$(var node_name)" output="screen">
 <!-- 	     required="true"> -->
+            <remap from="led_driver_node/led_pattern" to="led_emitter_node/led_pattern"/>
 			<param from="$(find-pkg-share led_driver)/config/$(var node_name)/$(var param_file_name).yaml"/>
 		</node>
 	</group>
