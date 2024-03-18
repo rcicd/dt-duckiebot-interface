@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import copy
-import rospy
+import rclpy
 import numpy as np
 
 from PIL import Image
@@ -49,10 +49,10 @@ class DisplayNode(DTROS):
     def __init__(self):
         super(DisplayNode, self).__init__(node_name="display_driver_node", node_type=NodeType.DRIVER)
         # get parameters
-        self._veh = rospy.get_param("~veh")
-        self._i2c_bus = rospy.get_param("~bus", 1)
-        self._i2c_address = rospy.get_param("~address", 0x3C)
-        self._frequency = rospy.get_param("~frequency", 1)
+        self._veh = self.get_parameter("~veh").get_parameter_value().string_value
+        self._i2c_bus = self.get_parameter("~bus", 1).get_parameter_value().integer_value
+        self._i2c_address = self.get_parameter("~address", 0x3C).get_parameter_value().integer_value
+        self._frequency = self.get_parameter("~frequency", 1).get_parameter_value().integer_value
         # create a display handler
         serial = i2c(port=self._i2c_bus, address=self._i2c_address)
         self._display = ssd1306(serial)
@@ -71,22 +71,22 @@ class DisplayNode(DTROS):
         self._fragments_lock = Semaphore(1)
         self._device_lock = Semaphore(1)
         # create subscribers
-        self._fragments_sub = rospy.Subscriber(
-            "~fragments",
+        self._fragments_sub = self.create_subscription(
             DisplayFragmentMsg,
+            "~fragments",
             self._fragment_cb,
-            queue_size=10,
-            buf_size="4M",
-            dt_topic_type=TopicType.DRIVER,
-            dt_help="Data to display on the display",
+            10
         )
-        self._button_sub = rospy.Subscriber(
-            "~button", ButtonEventMsg, self._button_event_cb, queue_size=1, dt_help="Button event"
+        self._button_sub = self.create_subscription(
+            ButtonEventMsg,
+            "~button",
+            self._button_event_cb,
+            1
         )
         # create internal renderers
         self._pager_renderer = PagerFragmentRenderer()
         # create rendering loop
-        self._timer = rospy.Timer(rospy.Duration.from_sec(1.0 / self._frequency), self._render)
+        self._timer = self.create_timer(1.0 / self._frequency, self._render)
         self._reminder = DTReminder(frequency=self._MAX_FREQUENCY_HZ)
 
         # user hardware test
@@ -177,7 +177,7 @@ class DisplayNode(DTROS):
         # list fragment for rendering
         with self._fragments_lock:
             self._fragments[msg.region][msg.id] = DisplayFragment(
-                data=img, roi=roi, page=msg.page, z=msg.z, _ttl=msg.ttl, _time=msg.header.stamp.to_sec()
+                data=img, roi=roi, page=msg.page, z=msg.z, _ttl=msg.ttl, _time=self.get_clock().now().to_msg()
             )
         # force refresh if this fragment is on the current page
         if msg.page == self._page:
@@ -199,7 +199,7 @@ class DisplayNode(DTROS):
                 for fragment_id in copy.copy(set(fragments.keys())):
                     fragment = fragments[fragment_id]
                     if fragment.ttl() <= 0:
-                        self.logdebug(
+                        self.get_logger().debug(
                             f"Fragment `{fragment_id}` on page `{fragment.page}`, "
                             f"region `{region}` w/ TTL `{fragment.given_ttl}` "
                             f"expired, remove!"
@@ -297,7 +297,7 @@ class PagerFragmentRenderer(AbsDisplayFragmentRenderer):
             page=self._page,
             z=self._z,
             _ttl=self._ttl,
-            _time=rospy.Time.now().to_sec(),
+            _time = self.get_clock().now().nanoseconds / 1e9
         )
 
     def update(self, pages: Iterable[int], page: int):
@@ -320,5 +320,7 @@ class PagerFragmentRenderer(AbsDisplayFragmentRenderer):
 
 
 if __name__ == "__main__":
+    rclpy.init()
     node = DisplayNode()
-    rospy.spin()
+    rclpy.spin(node)
+    rclpy.shutdown()

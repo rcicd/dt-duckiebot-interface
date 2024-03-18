@@ -12,9 +12,8 @@
     <export>
         <build_type>ament_python</build_type>
     </export>
-
-    <depend>setuptools</depend>
-    <depend>rospy</depend>
+    <depend>utils_package</depend>
+    <depend>rclpy</depend>
     <depend>duckietown_msgs</depend>
     <depend>hat_driver</depend>
 

@@ -14,10 +14,9 @@
     </export>
 
     <depend>setuptools</depend>
-    <depend>rospy</depend>
     <depend>rclpy</depend>
     <depend>duckietown_msgs</depend>
     <depend>sensor_msgs</depend>
     <depend>std_msgs</depend>
-
+    <depend>utils_package</depend>
 </package>

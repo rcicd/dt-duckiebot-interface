@@ -2,7 +2,8 @@ import re
 import subprocess
 import requests
 import netifaces as ni
-import rospy
+import rclpy
+from rclpy.node import Node
 
 from dt_duckiebot_hardware_tests import HardwareTest, HardwareTestJsonParamType
 
@@ -48,14 +49,14 @@ class HardwareTestWifi(HardwareTest):
         return "None"
 
     def cb_run_test(self, _):
-        rospy.loginfo(f"[{self.test_id()}] Test service called.")
+        self.get_logger().info(f"[{self.test_id()}] Test service called.")
         success = True
         response = ""
 
         try:
             response = self._get_ipv4_addr()
         except Exception as e:
-            rospy.logerr(f"[{self.test_id()}] Experienced error: {e}")
+            self.get_logger().error(f"[{self.test_id()}] Experienced error: {e}")
             success = False
 
         return self.format_response_object(
@@ -108,7 +109,7 @@ class HardwareTestBattery(HardwareTest):
         )
 
     def cb_run_test(self, _):
-        rospy.loginfo(f"[{self.test_id()}] Test service called.")
+        self.get_logger().info(f"[{self.test_id()}] Test service called.")
         success = True
         response = ""
 
@@ -129,7 +130,7 @@ class HardwareTestBattery(HardwareTest):
                 ]
             )
         except Exception as e:
-            rospy.logerr(f"[{self.test_id()}] Experienced error: {e}")
+            self.get_logger().error(f"[{self.test_id()}] Experienced error: {e}")
             success = False
 
         return self.format_response_object(
@@ -142,3 +143,20 @@ class HardwareTestBattery(HardwareTest):
                 ),
             ],
         )
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    wifi_test_node = HardwareTestWifi()
+    battery_test_node = HardwareTestBattery()
+
+    rclpy.spin(wifi_test_node)
+    rclpy.spin(battery_test_node)
+
+    wifi_test_node.destroy_node()
+    battery_test_node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

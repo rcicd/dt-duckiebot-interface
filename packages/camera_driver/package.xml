@@ -12,9 +12,10 @@
     <export>
         <build_type>ament_python</build_type>
     </export>
-
+    <depend>utils_package</depend>
     <depend>duckietown_msgs</depend>
-    <depend>rospy</depend>
     <depend>rclpy</depend>
+    <depend>cv_bridge</depend>
+    <depend>sensor_msgs</depend>
     <depend>std_msgs</depend>
 </package>

@@ -1,4 +1,4 @@
-import rospy
+import rclpy
 
 from dt_duckiebot_hardware_tests import HardwareTest, HardwareTestJsonParamType
 
@@ -26,7 +26,7 @@ class HardwareTestCamera(HardwareTest):
         )
 
     def cb_run_test(self, _):
-        rospy.loginfo(f"[{self.test_id()}] Test service called.")
+        self.loginfo(f"[{self.test_id()}] Test service called.")
 
         # Return the service response
         return self.format_response_stream(

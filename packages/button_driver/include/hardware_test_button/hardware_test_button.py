@@ -1,4 +1,5 @@
-import rospy
+import rclpy
+from rclpy.node import Node
 
 from button_driver import ButtonDriver
 from dt_duckiebot_hardware_tests import HardwareTest, HardwareTestJsonParamType
@@ -6,10 +7,10 @@ from dt_duckiebot_hardware_tests import HardwareTest, HardwareTestJsonParamType
 
 class HardwareTestButton(HardwareTest):
     def __init__(
-        self,
-        driver: ButtonDriver,
-        led_blink_secs: int = 3,
-        led_blink_hz: int = 1,
+            self,
+            driver: ButtonDriver,
+            led_blink_secs: int = 3,
+            led_blink_hz: int = 1,
     ) -> None:
         super().__init__()
 
@@ -44,7 +45,7 @@ class HardwareTestButton(HardwareTest):
         self._button_released = True
 
     def cb_run_test(self, _):
-        rospy.loginfo(f"[{self.test_id()}] Test service called.")
+        self.get_logger().info(f"[{self.test_id()}] Test service called.")
         success = True
 
         try:
@@ -56,11 +57,11 @@ class HardwareTestButton(HardwareTest):
             # button press event test
             self._driver.start_test(self.button_event_cb)
             while not self._button_released:
-                rospy.sleep(0.1)
+                rclpy.sleep(0.1)
             # reset
             self._button_released = False
         except Exception as e:
-            rospy.logerr(f"[{self.test_id()}] Experienced error: {e}")
+            self.get_logger().error(f"[{self.test_id()}] Experienced error: {e}")
             success = False
 
         params = f"[{self.test_id()}] led_blink_secs = {self.led_blink_secs}, led_blink_hz = {self.led_blink_hz}"
@@ -75,3 +76,17 @@ class HardwareTestButton(HardwareTest):
                 ),
             ],
         )
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    node = HardwareTestButton()
+
+    rclpy.spin(node)
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

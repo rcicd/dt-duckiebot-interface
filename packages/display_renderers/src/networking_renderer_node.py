@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-
 import os
-import rospy
+import rclpy
 import netifaces
 from PIL import Image, ImageOps
 from duckietown_msgs.msg import DisplayFragment as DisplayFragmentMsg
@@ -14,29 +12,25 @@ from duckietown.utils.image.pil import pil_to_np
 
 class NetworkingDisplayRendererNode(DTROS):
     def __init__(self):
-        super(NetworkingDisplayRendererNode, self).__init__(
-            node_name="networking_renderer_node", node_type=NodeType.VISUALIZATION
-        )
+        super(NetworkingDisplayRendererNode, self).__init__("networking_renderer_node")
         # get parameters
-        self._veh = rospy.get_param("~veh")
-        self._assets_dir = rospy.get_param("~assets_dir")
-        self._frequency = rospy.get_param("~frequency")
+        self._veh = self.declare_parameter("veh").get_parameter_value().string_value
+        self._assets_dir = self.declare_parameter("assets_dir").get_parameter_value().string_value
+        self._frequency = self.declare_parameter("frequency").get_parameter_value().double_value
         # create publisher
-        self._pub = rospy.Publisher(
-            "~fragments",
+        self._pub = self.create_publisher(
             DisplayFragmentMsg,
-            queue_size=1,
-            dt_topic_type=TopicType.VISUALIZATION,
-            dt_help="Fragments to display on the display",
+            "fragments",
+            1
         )
         # create renderers
         self._wlan0_indicator = NetIFaceFragmentRenderer(self._assets_dir, "wlan0", DisplayROI(0, 0, 11, 16))
         self._eth0_indicator = NetIFaceFragmentRenderer(self._assets_dir, "eth0", DisplayROI(14, 0, 11, 16))
         self._renderers = [self._wlan0_indicator, self._eth0_indicator]
         # create loop
-        self._timer = rospy.Timer(rospy.Duration.from_sec(1.0 / self._frequency), self._publish)
+        self._timer = self.create_timer(1.0 / self._frequency, self._publish)
 
-    def _publish(self, _):
+    def _publish(self):
         for renderer in self._renderers:
             msg = renderer.as_msg()
             self._pub.publish(msg)
@@ -67,6 +61,16 @@ class NetIFaceFragmentRenderer(AbsDisplayFragmentRenderer):
         self._buffer[:, :] = self._assets[icon]
 
 
-if __name__ == "__main__":
+def main(args=None):
+    rclpy.init(args=args)
+
     node = NetworkingDisplayRendererNode()
-    rospy.spin()
+
+    rclpy.spin(node)
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

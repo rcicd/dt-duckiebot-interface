@@ -1,4 +1,5 @@
-import rospy
+import rclpy
+from rclpy.node import Node
 
 from typing import Callable
 
@@ -32,11 +33,11 @@ class OLEDDisplayTestRenderer(MonoImageFragmentRenderer):
 
 class HardwareTestOledDisplay(HardwareTest):
     def __init__(
-        self,
-        fn_show_test_display: Callable[[DisplayFragmentMsg], None],
-        fn_remove_test_display: Callable[[], None],
-        duration: int = 5,
-        disp_text: str = "OLED Display Test",
+            self,
+            fn_show_test_display: Callable[[DisplayFragmentMsg], None],
+            fn_remove_test_display: Callable[[], None],
+            duration: int = 5,
+            disp_text: str = "OLED Display Test",
     ) -> None:
         super().__init__()
         # test settings
@@ -65,14 +66,14 @@ class HardwareTestOledDisplay(HardwareTest):
         )
 
     def cb_run_test(self, _):
-        rospy.loginfo(f"[{self.test_id()}] Test service called.")
+        self.get_logger().info(f"[{self.test_id()}] Test service called.")
         success = True
         response_type = HardwareTestJsonParamType.STRING
 
         # Subscribe to the topic and get one message
         try:
-            start_ts = rospy.Time.now()
-            end_ts = start_ts + rospy.Duration(self.duration)
+            start_ts = self.get_clock().now()
+            end_ts = start_ts + rclpy.duration.Duration(seconds=self.duration)
             # show test display
             self._handle_start_test(
                 OLEDDisplayTestRenderer(
@@ -81,12 +82,12 @@ class HardwareTestOledDisplay(HardwareTest):
                 ).as_msg()
             )
             # run until specified time reached
-            while rospy.Time.now() < end_ts:
-                rospy.sleep(1.0)
+            while self.get_clock().now() < end_ts:
+                rclpy.sleep(1.0)
             # go back to homepage
             self._handle_end_test()
-        except rospy.ROSException as e:
-            rospy.logerr(f"Failed to run the test: {e}")
+        except Exception as e:
+            self.get_logger().error(f"Failed to run the test: {e}")
             success = False
 
         response = f"[{self.test_id()}] duration = {self.duration}s, disp_text = '{self.disp_text}'"

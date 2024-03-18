@@ -11,10 +11,7 @@
         <build_type>ament_python</build_type>
     </export>
 
-    <depend>setuptools</depend>
-    <depend>roscpp</depend>
     <depend>rclcpp</depend>
-    <depend>rospy</depend>
     <depend>rclpy</depend>
-
+    <depend>utils_package</depend>
 </package>

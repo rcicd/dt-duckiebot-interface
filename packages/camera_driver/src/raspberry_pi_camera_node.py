@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import io
-import rospy
+import rclpy
 
 from picamera import PiCamera
 from sensor_msgs.msg import CompressedImage
@@ -78,8 +78,10 @@ class RaspberryPiCameraNode(AbsCameraNode):
 
 
 if __name__ == "__main__":
+    rclpy.init()
     # initialize the node
     camera_node = RaspberryPiCameraNode()
     camera_node.start()
     # keep the node alive
-    rospy.spin()
+    rclpy.spin(camera_node)
+    rclpy.shutdown()

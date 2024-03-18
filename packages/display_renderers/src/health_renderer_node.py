@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-
 import os
-import rospy
+import rclpy
 import requests
 from typing import Union
 from duckietown_msgs.msg import DisplayFragment as DisplayFragmentMsg
@@ -26,29 +24,25 @@ from duckietown.utils.image.pil import pil_to_np
 
 class HealthDisplayRendererNode(DTROS):
     def __init__(self):
-        super(HealthDisplayRendererNode, self).__init__(
-            node_name="health_renderer_node", node_type=NodeType.VISUALIZATION
-        )
+        super(HealthDisplayRendererNode, self).__init__("health_renderer_node")
         # get parameters
-        self._veh = rospy.get_param("~veh")
-        self._assets_dir = rospy.get_param("~assets_dir")
-        self._frequency = rospy.get_param("~frequency")
+        self._veh = self.declare_parameter("veh").get_parameter_value().string_value
+        self._assets_dir = self.declare_parameter("assets_dir").get_parameter_value().string_value
+        self._frequency = self.declare_parameter("frequency").get_parameter_value().double_value
         # create publisher
-        self._pub = rospy.Publisher(
-            "~fragments",
+        self._pub = self.create_publisher(
             DisplayFragmentMsg,
-            queue_size=1,
-            dt_topic_type=TopicType.VISUALIZATION,
-            dt_help="Fragments to display on the display",
+            "fragments",
+            1
         )
         # create renderers
         self._battery_indicator = BatteryIndicatorFragmentRenderer(self._assets_dir)
         self._usage_renderer = UsageStatsFragmentRenderer()
         self._renderers = [self._battery_indicator, self._usage_renderer]
         # create loop
-        self._timer = rospy.Timer(rospy.Duration.from_sec(1.0 / self._frequency), self._beat)
+        self._timer = self.create_timer(1.0 / self._frequency, self._beat)
 
-    def _beat(self, _):
+    def _beat(self):
         self._fetch()
         self._publish()
 
@@ -167,11 +161,11 @@ DSK |{pdsk_bar}| {pdsk}"""
         self._max_ctmp = 60
 
     def set(
-        self,
-        ctmp: Union[str, int, float],
-        pcpu: Union[str, int],
-        pmem: Union[str, int],
-        pdsk: Union[str, int],
+            self,
+            ctmp: Union[str, int, float],
+            pcpu: Union[str, int],
+            pmem: Union[str, int],
+            pdsk: Union[str, int],
     ):
         ptmp = (
             int(100 * (max(0, ctmp - self._min_ctmp) / (self._max_ctmp - self._min_ctmp)))
@@ -207,6 +201,16 @@ DSK |{pdsk_bar}| {pdsk}"""
         return cls.BAR_SYMBOL * full + " " * (cls.BAR_LEN - full)
 
 
-if __name__ == "__main__":
+def main(args=None):
+    rclpy.init(args=args)
+
     node = HealthDisplayRendererNode()
-    rospy.spin()
+
+    rclpy.spin(node)
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

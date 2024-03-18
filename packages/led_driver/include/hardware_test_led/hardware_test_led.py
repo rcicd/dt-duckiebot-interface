@@ -1,27 +1,32 @@
-import rospy
+import rclpy
 import numpy as np
 
 from typing import List, Tuple, Dict
 from colorir import HSV
 
 from rgb_led import RGB_LED
-from dt_duckiebot_hardware_tests import HardwareTest, HardwareTestJsonParamType
+from hardware_test_led import HardwareTestLED
+from std_srvs.srv import Empty
+
+from duckietown.dtros import DTROS, NodeType
 
 
-class HardwareTestLED(HardwareTest):
+class HardwareTestLED(HardwareTestLED, DTROS):
     def __init__(
-        self,
-        driver: RGB_LED,
-        info_str: str,
-        led_ids: List[int],
-        idle_lighting: Dict[str, List],
-        fade_in_secs: int = 1,
-        duration: int = 6,
-        fade_out_secs: int = 1,
+            self,
+            driver: RGB_LED,
+            info_str: str,
+            led_ids: List[int],
+            idle_lighting: Dict[str, List],
+            fade_in_secs: int = 1,
+            duration: int = 6,
+            fade_out_secs: int = 1,
     ) -> None:
+        # Node Init
+        super().__init__(node_name="hardware_test_led_node", node_type=NodeType.DRIVER)
+
         # describe this group of LEDs, e.g. "front" or "back"
         self._info_str = info_str
-        super().__init__(service_identifier=f"tests/{self._info_str}")
 
         # attr
         self._driver = driver
@@ -34,26 +39,8 @@ class HardwareTestLED(HardwareTest):
         self.fade_out_secs = fade_out_secs
         self._color_sequence = None  # lazy init. If test is run, generate this
 
-    def test_id(self) -> str:
-        return f"LED ({self._info_str})"
-
-    def test_description_preparation(self) -> str:
-        return self.html_util_ul(
-            [
-                f"Place your Duckiebot on a flat surface in a position that allows you to see the {self._info_str} LEDs.",
-            ]
-        )
-
-    def test_description_expectation(self) -> str:
-        return self.html_util_ul(
-            [
-                "The Duckiebot LEDs should start shining.",
-                "The LEDs should show a smooth transition of these colors: "
-                "RED -> YELLOW -> GREEN -> BLUE -> PURPLE -> RED.",
-                f"In about {self.fade_in_secs + self.duration + self.fade_out_secs} seconds, "
-                f"they should be off.",
-            ]
-        )
+        # ROS Pubsub initialization
+        self.create_service(Empty, "~initialize_led", self.zero_sensor)
 
     def _generate_colors(self, step_size: int = 1) -> List[Tuple[float, float, float]]:
         """Generate a smooth transition of colors"""
@@ -77,10 +64,10 @@ class HardwareTestLED(HardwareTest):
         for v in seq_v:
             for i in self._led_ids:
                 self._driver.set_RGB(i, HSV(mono_hue, 1.0, v).rgb(), is_test_cmd=True)
-            rospy.sleep(interval_secs)
+            rclpy.sleep(interval_secs)
 
     def cb_run_test(self, _):
-        rospy.loginfo(f"[{self.test_id()}] Test service called.")
+        self.get_logger().info(f"[{self.test_id()}] Test service called.")
         success = True
 
         # generate test color sequence if not yet initialized
@@ -98,7 +85,7 @@ class HardwareTestLED(HardwareTest):
             for color in self._color_sequence:
                 for i in self._led_ids:
                     self._driver.set_RGB(i, color, is_test_cmd=True)
-                rospy.sleep(interval)
+                rclpy.sleep(interval)
 
             # turn all off
             self._fade_mono(fade_in=False, interval_secs=interval)
@@ -112,7 +99,7 @@ class HardwareTestLED(HardwareTest):
                     is_test_cmd=True,
                 )
         except Exception as e:
-            rospy.logerr(f"[{self.test_id()}] Experienced error: {e}")
+            self.get_logger().error(f"[{self.test_id()}] Experienced error: {e}")
             success = False
         finally:
             self._driver.finish_hardware_test()
@@ -129,3 +116,18 @@ class HardwareTestLED(HardwareTest):
                 ),
             ],
         )
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    node = HardwareTestLED()
+
+    rclpy.spin(node)
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

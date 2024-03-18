@@ -1,5 +1,7 @@
-import rospy
-
+import rclpy
+from rclpy.node import Node
+from rclpy.timer import Rate
+from rclpy.parameter import Parameter
 from enum import Enum, auto
 
 from dt_duckiebot_hardware_tests import HardwareTest, HardwareTestJsonParamType
@@ -13,11 +15,11 @@ class HardwareTestMotorSide(Enum):
 
 class HardwareTestMotor(HardwareTest):
     def __init__(
-        self,
-        wheel_side: "HardwareTestMotorSide",
-        motors_driver: DaguWheelsDriver,
-        vel: float = 0.5,
-        duration: int = 3,
+            self,
+            wheel_side: "HardwareTestMotorSide",
+            motors_driver: DaguWheelsDriver,
+            vel: float = 0.5,
+            duration: int = 3,
     ) -> None:
         self._info_str = "left" if wheel_side == HardwareTestMotorSide.LEFT else "right"
         super().__init__(service_identifier=f"tests/{self._info_str}")
@@ -50,13 +52,13 @@ class HardwareTestMotor(HardwareTest):
         )
 
     def cb_run_test(self, _):
-        rospy.loginfo(f"[{self.test_id()}] Test service called.")
+        self.get_logger().info(f"[{self.test_id()}] Test service called.")
         success = True
 
         try:
             self._driver.start_hardware_test()
-            start_ts = rospy.Time.now()
-            end_ts = start_ts + rospy.Duration(self.duration)
+            start_ts = self.get_clock().now()
+            end_ts = start_ts + rclpy.duration.Duration(seconds=self.duration)
             if self._side == HardwareTestMotorSide.LEFT:
                 self._driver.set_wheels_speed(
                     left=self.vel, right=0.0, is_test_cmd=True
@@ -65,11 +67,11 @@ class HardwareTestMotor(HardwareTest):
                 self._driver.set_wheels_speed(
                     left=0.0, right=self.vel, is_test_cmd=True
                 )
-            while rospy.Time.now() < end_ts:
-                rospy.sleep(1.0)
+            while self.get_clock().now() < end_ts:
+                rclpy.sleep(1.0)
             self._driver.set_wheels_speed(left=0.0, right=0.0, is_test_cmd=True)
         except Exception as e:
-            rospy.logerr(f"[{self.test_id()}] Experienced error: {e}")
+            self.get_logger().error(f"[{self.test_id()}] Experienced error: {e}")
             success = False
         finally:
             self._driver.finish_hardware_test()
@@ -86,3 +88,17 @@ class HardwareTestMotor(HardwareTest):
                 ),
             ],
         )
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    node = HardwareTestMotor("left")
+
+    rclpy.spin(node)
+
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

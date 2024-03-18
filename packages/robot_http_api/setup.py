@@ -28,11 +28,10 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*.launch'))),
-        # (os.path.join('share', package_name, 'include'), glob(os.path.join('include', '**', '*.py'))),
-        (os.path.join('share', package_name, 'src'), glob(os.path.join('src', '*.py')))
-    ]
-               # + install_files
+        ('share/' + package_name + '/launch', glob('launch/*.launch')),
+        ('share/' + package_name + '/src', glob('src/*.py')),
+        ('lib/' + package_name, glob('src/*.py'))
+    ]# + install_files
     ,
     description='The robot_http_api meta package',
     maintainer='Andrea F. Daniele',
@@ -40,7 +39,7 @@ setup(
     license='GPLv3',
     entry_points={
         'console_scripts': [
-            'robot_http_api_node.py = robot_http_api.robot_http_api_node:main',
+            'robot_http_api_node = robot_http_api.robot_http_api_node:main',
         ],
     },
 )

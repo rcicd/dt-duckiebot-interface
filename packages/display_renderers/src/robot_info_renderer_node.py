@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
-
-import rospy
+import rclpy
+from rclpy.node import Node
 import requests
 from typing import Dict
 
@@ -16,22 +15,16 @@ from display_renderer import (
 
 from duckietown.dtros import DTROS, NodeType, TopicType
 
-
-class RobotInfoRendererNode(DTROS):
+class RobotInfoRendererNode(Node):
     def __init__(self):
-        super(RobotInfoRendererNode, self).__init__(
-            node_name="robot_info_renderer_node", node_type=NodeType.VISUALIZATION
-        )
+        super(RobotInfoRendererNode, self).__init__("robot_info_renderer_node")
         # get parameters
-        self._veh = rospy.get_param("~veh")
+        self._veh = self.declare_parameter("veh").get_parameter_value().string_value
         # create publisher
-        self._pub = rospy.Publisher(
-            "~fragments",
+        self._pub = self.create_publisher(
             DisplayFragmentMsg,
-            queue_size=1,
-            latch=True,
-            dt_topic_type=TopicType.VISUALIZATION,
-            dt_help="Fragments to display on the display",
+            "fragments",
+            1
         )
         # create renderers
         renderer = RobotInfoRenderer()
@@ -40,15 +33,15 @@ class RobotInfoRendererNode(DTROS):
         health_api_url = f"http://{self._veh}.local/health/"
         # just need to get data from health API once
         health_data = None
-        while not rospy.is_shutdown():
+        while rclpy.ok():
             try:
                 health_data = requests.get(health_api_url).json()
                 break
             except BaseException:
                 # wait for health API to become available
-                rospy.sleep(5)
+                rclpy.sleep(5)
                 continue
-        self.loginfo("Health API data fetch successful.")
+        self.get_logger().info("Health API data fetch successful.")
 
         # format texts for the display
         text = self._fmt({
@@ -60,10 +53,10 @@ class RobotInfoRendererNode(DTROS):
 
         # this information doesn't need to be updated, so publishing once and latching is enough
         self._pub.publish(renderer.as_msg())
-        self.loginfo("Robot Info Page published.")
+        self.get_logger().info("Robot Info Page published.")
 
         # keep node alive
-        rospy.spin()
+        rclpy.spin(self)
 
     def _shorten_str(self, input, max_length):
         """If the input is longer than the allowed, it's trimmed and '...' is added"""
@@ -102,6 +95,16 @@ class RobotInfoRenderer(TextFragmentRenderer):
         )
 
 
-if __name__ == "__main__":
+def main(args=None):
+    rclpy.init(args=args)
+
     node = RobotInfoRendererNode()
-    rospy.spin()
+
+    rclpy.spin(node)
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

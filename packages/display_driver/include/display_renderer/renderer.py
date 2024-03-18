@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-
 import abc
-import rospy
+import rclpy
 import numpy as np
 
 from typing import Union, Iterable
@@ -9,7 +7,6 @@ from typing import Union, Iterable
 from duckietown_msgs.msg import DisplayFragment as DisplayFragmentMsg
 from sensor_msgs.msg import RegionOfInterest
 from std_msgs.msg import Header
-
 from display_renderer import DisplayROI, DisplayRegion, monospace_screen
 
 from duckietown.utils.image.ros import mono8_to_imgmsg, mono1_to_imgmsg
@@ -17,7 +14,7 @@ from duckietown.utils.image.ros import mono8_to_imgmsg, mono1_to_imgmsg
 
 class AbsDisplayFragmentRenderer(abc.ABC):
     def __init__(
-        self, name: str, page: int, region: DisplayRegion, roi: DisplayROI, ttl: int = 10, z: int = 0
+            self, name: str, page: int, region: DisplayRegion, roi: DisplayROI, ttl: int = 10, z: int = 0
     ):
         self._name = name
         self._page = page
@@ -55,7 +52,7 @@ class AbsDisplayFragmentRenderer(abc.ABC):
     def as_msg(self):
         self._render()
         return DisplayFragmentMsg(
-            header=Header(stamp=rospy.Time.now()),
+            header=Header(stamp=self.get_clock().now().to_msg()),
             id=self._name,
             region=self._region.id,
             page=self._page,
@@ -77,13 +74,13 @@ class AbsDisplayFragmentRenderer(abc.ABC):
 
 class TextFragmentRenderer(AbsDisplayFragmentRenderer):
     def __init__(
-        self,
-        name: str,
-        page: int,
-        region: DisplayRegion,
-        roi: DisplayROI,
-        scale: Union[str, float] = 1.0,
-        **kwargs
+            self,
+            name: str,
+            page: int,
+            region: DisplayRegion,
+            roi: DisplayROI,
+            scale: Union[str, float] = 1.0,
+            **kwargs
     ):
         super(TextFragmentRenderer, self).__init__(name, page, region, roi, **kwargs)
         self._text = ""

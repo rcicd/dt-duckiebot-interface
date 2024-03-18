@@ -11,6 +11,7 @@
     <depend>ament_cmake</depend>
 
     <depend>rclpy</depend>
+    <depend>smbus2</depend>
 
     <export>
         <build_type>ament_python</build_type>

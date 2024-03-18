@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import cv2
-import rospy
+import rclpy
 import atexit
 import subprocess
 import numpy as np
@@ -42,7 +42,7 @@ class RaspberryPi64Camera(AbsCameraNode):
                 # image is already JPEG encoded
                 image = cast(np.ndarray, image)
                 image_msg = CompressedImage()
-                image_msg.header.stamp = rospy.Time.now()
+                image_msg.header.stamp = self.get_clock().now().to_msg()
                 image_msg.format = "jpeg"
                 image_msg.data = image.tobytes()
                 # publish the compressed image
@@ -112,8 +112,10 @@ class RaspberryPi64Camera(AbsCameraNode):
 
 
 if __name__ == "__main__":
+    rclpy.init()
     # initialize the node
     camera_node = RaspberryPi64Camera()
     camera_node.start()
     # keep the node alive
-    rospy.spin()
+    rclpy.spin(camera_node)
+    rclpy.shutdown()

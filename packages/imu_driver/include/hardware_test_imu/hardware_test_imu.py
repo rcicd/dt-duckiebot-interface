@@ -1,4 +1,7 @@
-import rospy
+import rclpy
+from rclpy.node import Node
+from std_srvs.srv import Trigger, TriggerResponse
+from sensor_msgs.msg import Imu
 
 from dt_duckiebot_hardware_tests import HardwareTest, HardwareTestJsonParamType
 
@@ -39,7 +42,7 @@ class HardwareTestIMU(HardwareTest):
         )
 
     def cb_run_test(self, _):
-        rospy.loginfo(f"[{self.test_id()}] Test service called.")
+        self.get_logger().info(f"[{self.test_id()}] Test service called.")
 
         # Return the service response
         return self.format_response_stream(
@@ -54,3 +57,18 @@ class HardwareTestIMU(HardwareTest):
                 ),
             ],
         )
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    node = HardwareTestIMU()
+
+    rclpy.spin(node)
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

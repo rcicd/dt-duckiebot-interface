@@ -13,8 +13,8 @@
         <build_type>ament_python</build_type>
     </export>
 
-    <depend>rospy</depend>
     <depend>rclpy</depend>
+    <depend>utils_package</depend>
     <depend>duckietown_msgs</depend>
     <depend>sensor_msgs</depend>
     <depend>std_msgs</depend>

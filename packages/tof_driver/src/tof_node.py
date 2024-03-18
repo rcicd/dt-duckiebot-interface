@@ -1,60 +1,51 @@
-#!/usr/bin/env python3
-
 import dataclasses
 import time
 from typing import Optional
 
-import rospy
-import yaml
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Range
+from std_msgs.msg import Header
+
+from tof_accuracy import ToFAccuracy
+from hardware_test_tof import HardwareTestToF
+from dt_class_utils import DTReminder
+from dt_vl53l0x import VL53L0X
 from display_renderer import (
     DisplayROI,
     PAGE_TOF,
     REGION_BODY,
     MonoImageFragmentRenderer,
 )
-from display_renderer.text import monospace_screen
-from dt_class_utils import DTReminder
-from dt_vl53l0x import VL53L0X
-from duckietown.dtros import DTROS, NodeType, TopicType
-from duckietown_msgs.msg import DisplayFragment
-from sensor_msgs.msg import Range
-from std_msgs.msg import Header
-
-from tof_accuracy import ToFAccuracy
-from hardware_test_tof import HardwareTestToF
 
 
-class ToFNode(DTROS):
+class ToFNode(Node):
     def __init__(self):
-        super(ToFNode, self).__init__(node_name="tof_node", node_type=NodeType.DRIVER)
+        super(ToFNode, self).__init__("tof_node")
         # get parameters
-        self._veh = rospy.get_param("~veh")
-        self._i2c_connectors = rospy.get_param("~connectors", {})
-        self._sensor_name = rospy.get_param("~sensor_name")
-        self._frequency = int(max(1, rospy.get_param("~frequency", 10)))
-        self._mode = rospy.get_param("~mode", "BETTER")
-        self._display_fragment_frequency = rospy.get_param("~display_fragment_frequency", 4)
+        self._veh = self.get_parameter("veh").get_parameter_value().string_value
+        self._i2c_connectors = self.get_parameter("connectors").get_parameter_value().string_value
+        self._sensor_name = self.get_parameter("sensor_name").get_parameter_value().string_value
+        self._frequency = self.get_parameter("frequency").get_parameter_value().integer_value
+        self._mode = self.get_parameter("mode").get_parameter_value().string_value
+        self._display_fragment_frequency = self.get_parameter("display_fragment_frequency").get_parameter_value().integer_value
         self._accuracy = ToFAccuracy.from_string(self._mode)
         # create a VL53L0X sensor handler
         self._sensor: Optional[VL53L0X] = self._find_sensor()
         if not self._sensor:
             conns: str = yaml.safe_dump(self._i2c_connectors, indent=2, sort_keys=True)
-            self.logerr(f"No VL53L0X device found. These connectors were tested:\n{conns}\n")
+            self.get_logger().error(f"No VL53L0X device found. These connectors were tested:\n{conns}\n")
             exit(1)
         # create publisher
-        self._pub = rospy.Publisher(
-            "~range",
+        self._pub = self.create_publisher(
             Range,
-            queue_size=1,
-            dt_topic_type=TopicType.DRIVER,
-            dt_help="The distance to the closest object detected by the sensor",
+            "~range",
+            1
         )
-        self._display_pub = rospy.Publisher(
-            "~fragments",
+        self._display_pub = self.create_publisher(
             DisplayFragment,
-            queue_size=1,
-            dt_topic_type=TopicType.VISUALIZATION,
-            dt_help="Fragments to display on the display",
+            "~fragments",
+            1
         )
         # user hardware test
         self._hardware_test = HardwareTestToF(self._sensor_name, self._accuracy)
@@ -64,42 +55,42 @@ class ToFNode(DTROS):
         # check frequency
         max_frequency = min(self._frequency, int(1.0 / self._accuracy.timing_budget))
         if self._frequency > max_frequency:
-            self.logwarn(
+            self.get_logger().warn(
                 f"Frequency of {self._frequency}Hz not supported. The selected mode "
                 f"{self._mode} has a timing budget of {self._accuracy.timing_budget}s, "
                 f"which yields a maximum frequency of {max_frequency}Hz."
             )
             self._frequency = max_frequency
-        self.loginfo(f"Frequency set to {self._frequency}Hz.")
+        self.get_logger().info(f"Frequency set to {self._frequency}Hz.")
         # create timers
-        self.timer = rospy.Timer(rospy.Duration.from_sec(1.0 / max_frequency), self._timer_cb)
+        self.timer = self.create_timer(1.0 / max_frequency, self._timer_cb)
         self._fragment_reminder = DTReminder(frequency=self._display_fragment_frequency)
 
     def _find_sensor(self) -> Optional[VL53L0X]:
         for connector in self._i2c_connectors:
             conn: str = "[bus:{bus}](0x{address:02X})".format(**connector)
-            self.loginfo(f"Trying to open device on connector {conn}")
+            self.get_logger().info(f"Trying to open device on connector {conn}")
             sensor = VL53L0X(i2c_bus=connector["bus"], i2c_address=connector["address"])
             try:
                 sensor.open()
             except FileNotFoundError:
                 # i2c BUS not found
-                self.logwarn(f"No devices found on connector {conn}, the bus does NOT exist")
+                self.get_logger().warn(f"No devices found on connector {conn}, the bus does NOT exist")
                 continue
             sensor.start_ranging(self._accuracy.mode)
             time.sleep(1)
             if sensor.get_distance() < 0:
-                self.logwarn(f"No devices found on connector {conn}, but the bus exists")
+                self.get_logger().warn(f"No devices found on connector {conn}, but the bus exists")
                 continue
-            self.loginfo(f"Device found on connector {conn}")
+            self.get_logger().info(f"Device found on connector {conn}")
             return sensor
 
-    def _timer_cb(self, _):
+    def _timer_cb(self):
         # detect range
         distance_mm = self._sensor.get_distance()
         # pack observation into a message
         msg = Range(
-            header=Header(stamp=rospy.Time.now(), frame_id=f"{self._veh}/tof/{self._sensor_name}"),
+            header=Header(stamp=self.get_clock().now().to_msg(), frame_id=f"{self._veh}/tof/{self._sensor_name}"),
             radiation_type=Range.INFRARED,
             field_of_view=self._accuracy.fov,
             min_range=self._accuracy.min_range,
@@ -149,6 +140,15 @@ class ToFSensorFragmentRenderer(MonoImageFragmentRenderer):
         self.data[self._title_h:, :] = reading
 
 
-if __name__ == "__main__":
+def main(args=None):
+    rclpy.init(args=args)
+
     node = ToFNode()
-    rospy.spin()
+
+    rclpy.spin(node)
+
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

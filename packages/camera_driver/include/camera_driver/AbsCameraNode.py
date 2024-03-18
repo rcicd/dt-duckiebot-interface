@@ -2,20 +2,20 @@ import os
 import time
 import yaml
 import copy
-import rospy
+import rclpy
+from rclpy.node import Node
 import numpy as np
 from threading import Thread
 
 from abc import ABC, abstractmethod
 from cv_bridge import CvBridge
 from sensor_msgs.msg import CompressedImage, CameraInfo
-from sensor_msgs.srv import SetCameraInfo, SetCameraInfoResponse
+from sensor_msgs.srv import SetCameraInfo
 
-from duckietown.dtros import DTROS, NodeType, TopicType, DTParam, ParamType
 from hardware_test_camera import HardwareTestCamera
 
 
-class AbsCameraNode(ABC, DTROS):
+class AbsCameraNode(ABC, Node):
     """Handles the imagery.
 
     The node handles the image stream, initializing it, publishing frames
@@ -55,52 +55,36 @@ class AbsCameraNode(ABC, DTROS):
 
     def __init__(self):
         # Initialize the DTROS parent class
-        super(AbsCameraNode, self).__init__(
-            node_name="camera",
-            node_type=NodeType.DRIVER,
-            help="Reads a stream of images from a camera and publishes the frames over ROS",
-        )
-        # Add the node parameters to the parameters dictionary and load their default values
-        self._res_w = DTParam(
-            "~res_w",
-            param_type=ParamType.INT,
-            help="Horizontal resolution (width) of the produced image frames.",
-        )
-        self._res_h = DTParam(
-            "~res_h",
-            param_type=ParamType.INT,
-            help="Vertical resolution (height) of the produced image frames.",
-        )
-        self._framerate = DTParam(
-            "~framerate", param_type=ParamType.INT, help="Framerate at which images frames are produced"
-        )
-        self._exposure_mode = DTParam(
-            "~exposure_mode",
-            param_type=ParamType.STRING,
-            help="Exposure mode of the camera. Supported values are listed on "
-            "https://picamera.readthedocs.io/en/release-1.13/"
-            "api_camera.html#picamera.PiCamera.exposure_mode",
-        )
+        super().__init__("camera")
+        self.declare_parameter("res_w", 640)
+        self._res_w = self.get_parameter("res_w")
+        self.declare_parameter("res_h", 480)
+        self._res_h = self.get_parameter("res_h")
+        self.declare_parameter("framerate", 30)
+        self._framerate = self.get_parameter("framerate")
+        self.declare_parameter("exposure_mode", "sports")
+        self._exposure_mode = self.get_parameter("exposure_mode")
 
         # define parameters
-        self._framerate.register_update_callback(self.parameters_updated)
-        self._res_w.register_update_callback(self.parameters_updated)
-        self._res_h.register_update_callback(self.parameters_updated)
-        self._exposure_mode.register_update_callback(self.parameters_updated)
+        # self._framerate.register_update_callback(self.parameters_updated)
+        # self._res_w.register_update_callback(self.parameters_updated)
+        # self._res_h.register_update_callback(self.parameters_updated)
+        # self._exposure_mode.register_update_callback(self.parameters_updated)
+        self.add_on_set_parameters_callback(self.parameters_updated)
 
         # intrinsic calibration
         self.cali_file_folder = "/data/config/calibrations/camera_intrinsic/"
-        self.frame_id = rospy.get_namespace().rstrip("/") + "/camera_optical_frame"
-        self.cali_file = self.cali_file_folder + rospy.get_namespace().strip("/") + ".yaml"
+        self.frame_id = self.get_namespace().rstrip("/") + "/camera_optical_frame"
+        self.cali_file = self.cali_file_folder + self.get_namespace().strip("/") + ".yaml"
 
         # locate calibration yaml file or use the default otherwise
         if not os.path.isfile(self.cali_file):
-            self.logwarn("Calibration not found: %s.\n Using default instead." % self.cali_file)
+            self.get_logger().warn("Calibration not found: %s.\n Using default instead." % self.cali_file)
             self.cali_file = self.cali_file_folder + "default.yaml"
 
         # shutdown if no calibration file not found
         if not os.path.isfile(self.cali_file):
-            rospy.signal_shutdown("Found no calibration file ... aborting")
+            self.get_logger().info("Found no calibration file ... aborting")
 
         # load the calibration file
         self.original_camera_info = self.load_camera_info(self.cali_file)
@@ -119,24 +103,22 @@ class AbsCameraNode(ABC, DTROS):
         self._has_published = False
         self._is_stopped = False
         self._worker = None
-        self.pub_img = rospy.Publisher(
-            "~image/compressed",
+        self.pub_img = self.create_publisher(
             CompressedImage,
-            queue_size=1,
-            dt_topic_type=TopicType.DRIVER,
-            dt_help="The stream of JPEG compressed images from the camera",
+            "image/compressed",
+            1
         )
-        self.pub_camera_info = rospy.Publisher(
-            "~camera_info",
+        self.pub_camera_info = self.create_publisher(
             CameraInfo,
-            queue_size=1,
-            dt_topic_type=TopicType.DRIVER,
-            dt_help="The stream of camera calibration information, the message content is fixed",
+            "camera_info",
+            1
         )
 
         # Setup service (for camera_calibration)
-        self.srv_set_camera_info = rospy.Service(
-            "~set_camera_info", SetCameraInfo, self.srv_set_camera_info_cb
+        self.srv_set_camera_info = self.create_service(
+            SetCameraInfo,
+            "set_camera_info",
+            self.srv_set_camera_info_cb
         )
 
         # monitor
@@ -148,14 +130,28 @@ class AbsCameraNode(ABC, DTROS):
     def is_stopped(self):
         return self._is_stopped
 
-    def parameters_updated(self):
+    # def parameters_updated(self):
+    #     self.stop()
+    #     self.update_camera_params()
+    #     self.start()
+
+    def parameters_updated(self, parameters):
         self.stop()
+        for parameter in parameters:
+            if parameter.name == 'res_w':
+                self._res_w = parameter.value
+            elif parameter.name == 'res_h':
+                self._res_h = parameter.value
+            elif parameter.name == 'framerate':
+                self._framerate = parameter.value
+            elif parameter.name == 'exposure_mode':
+                self._exposure_mode = parameter.value
         self.update_camera_params()
         self.start()
 
     def publish(self, image_msg):
         # add time to messages
-        stamp = rospy.Time.now()
+        stamp = self.get_clock().now().to_msg()
         image_msg.header.stamp = stamp
         self.current_camera_info.header.stamp = stamp
         # update camera frame
@@ -180,7 +176,8 @@ class AbsCameraNode(ABC, DTROS):
             try:
                 self.setup()
             except RuntimeError as e:
-                rospy.signal_shutdown(str(e))
+                self.get_logger().info(str(e))
+                rclpy.shutdown()
                 return
             # run camera thread
             self._worker = Thread(target=self.run, daemon=True)
@@ -220,8 +217,8 @@ class AbsCameraNode(ABC, DTROS):
 
     def srv_set_camera_info_cb(self, req):
         self.log("[srv_set_camera_info_cb] Callback!")
-        filename = self.cali_file_folder + rospy.get_namespace().strip("/") + ".yaml"
-        response = SetCameraInfoResponse()
+        filename = self.cali_file_folder + self.get_namespace().rstrip("/") + ".yaml"
+        response = SetCameraInfo.Response()
         response.success = self.save_camera_info(req.camera_info, filename)
         response.status_message = "Write to %s" % filename
         return response
@@ -240,7 +237,7 @@ class AbsCameraNode(ABC, DTROS):
         calib = {
             "image_width": camera_info_msg.width,
             "image_height": camera_info_msg.height,
-            "camera_name": rospy.get_name().lstrip("/").split("/")[0],
+            "camera_name": self.get_name().lstrip("/").split("/")[0],
             "distortion_model": camera_info_msg.distortion_model,
             "distortion_coefficients": {"data": camera_info_msg.D, "rows": 1, "cols": 5},
             "camera_matrix": {"data": camera_info_msg.K, "rows": 3, "cols": 3},

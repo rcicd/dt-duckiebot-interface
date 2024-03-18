@@ -1,47 +1,33 @@
-#!/usr/bin/env python3
-import rospy
+import rclpy
+from rclpy.node import Node
+from rclpy.timer import Rate
+from std_srvs.srv import SetBool
+from sensor_msgs.msg import Range
+from std_msgs.msg import Header
 
-from duckietown_msgs.msg import LEDPattern
-from duckietown_msgs.srv import SetCustomLEDPattern
+from dt_duckiebot_msgs.msg import LEDPattern
+from dt_duckiebot_msgs.srv import SetCustomLEDPattern
 
-from duckietown.dtros import DTROS, NodeType
-from duckietown.dtros.utils import apply_namespace
+from dt_class_utils import DTReminder
+from dt_vl53l0x import VL53L0X
+from display_renderer import (
+    DisplayROI,
+    PAGE_TOF,
+    REGION_BODY,
+    MonoImageFragmentRenderer,
+)
 
 
-class TrafficLightNode(DTROS):
-    """Handles the LED patterns for the traffic lights.
-
-    The class creates an object which handles the timers for managing
-    a traffic light at an intersection. By default a 4-way intersection
-    is assumed, this can be modified by the `~number_leds` configuration parameter.
-    The actual execution of the protocol, and the communication with the driver is done
-    by :obj:`LEDEmitterNode`, so it must be running for the correct operation of this node.
-    An additional protocol defines the length of the periods of green light
-    and the order of the directions. All configuration parameters are dynamically configurable
-    and can be updated via `rosparam set`.
-
-    Configuration:
-        ~number_leds (:obj:`int`): Number of LEDs, should be 3 or 4 depending on the
-            intersection type, default is 4
-        ~activation_order (:obj:`list` of :obj:`int`): The order of activation of the
-            LEDs, default is [0,1,2,3]
-        ~green_time (:obj:`float`): Duration of the green signal in seconds, default is 5
-        ~all_red_time (:obj:`float`): Duration of a signal when all direction are red (waiting
-            for the Duckiebots to clear the intersection) in seconds, default is 4
-        ~frequency (:obj:`float`): The blinking frequency of the green signal, default is 7.8
-
-    """
-
-    def __init__(self, node_name):
-        # Initialize the DTROS parent class
-        super(TrafficLightNode, self).__init__(node_name=node_name, node_type=NodeType.COMMUNICATION)
+class TrafficLightNode(Node):
+    def __init__(self):
+        super(TrafficLightNode, self).__init__("traffic_light_node")
 
         # Import protocols
-        self._number_leds = rospy.get_param("~number_leds")
-        self._activation_order = rospy.get_param("~activation_order")
-        self._green_time = rospy.get_param("~green_time")
-        self._all_red_time = rospy.get_param("~all_red_time")
-        self._frequency = rospy.get_param("~frequency")
+        self._number_leds = self.get_parameter("number_leds").get_parameter_value().integer_value
+        self._activation_order = self.get_parameter("activation_order").get_parameter_value().integer_array_value
+        self._green_time = self.get_parameter("green_time").get_parameter_value().double_value
+        self._all_red_time = self.get_parameter("all_red_time").get_parameter_value().double_value
+        self._frequency = self.get_parameter("frequency").get_parameter_value().double_value
 
         self.green_idx = 0
 
@@ -52,26 +38,18 @@ class TrafficLightNode(DTROS):
         self.color_mask[0 : self._number_leds] = [1] * self._number_leds
 
         # Function mapping to LEDEmitterNode's `set_custom_pattern` service
-        self.changePattern = rospy.ServiceProxy(
-            apply_namespace("led_emitter_node/set_custom_pattern", ns_level=1), SetCustomLEDPattern
+        self.changePattern = self.create_client(
+            SetCustomLEDPattern,
+            "led_emitter_node/set_custom_pattern"
         )
 
         # Start a timer that will regularly call a method that changes
         # the direction that get green light
-        self.traffic_cycle = rospy.Timer(rospy.Duration(cycle_duration), self.change_direction)
+        self.traffic_cycle = self.create_timer(cycle_duration, self.change_direction)
 
-        self.log("Initialized.")
+        self.get_logger().info("Initialized.")
 
-    def change_direction(self, event):
-        """Callback changing direction of green light.
-
-        The callback iterates through the LEDs of a traffic light and
-        generates an LEDPattern message accordingly. The green light blinks
-        at the defined frequency, while the red light stays static. After
-        the green light blinks according to protocol, there is a dead zone
-        in which all directions are on red. The message is published as a
-        special pattern to the led_emitter_node.
-        """
+    def change_direction(self):
         # Move to next light in list
         self.green_idx = (self.green_idx + 1) % self._number_leds
         green_LED = self._activation_order[self.green_idx]
@@ -91,15 +69,15 @@ class TrafficLightNode(DTROS):
         pattern_msg.frequency = self._frequency
         pattern_msg.frequency_mask = self.to_led_order(frequency_mask)
 
-        self.changePattern(pattern_msg)
+        self.changePattern.call_async(pattern_msg)
 
         # Keep the green light on
-        rospy.sleep(self._green_time)
+        rclpy.sleep(self._green_time)
 
         # Turn all on red for safety
         pattern_msg.color_list = ["red"] * 5
         pattern_msg.frequency = 0
-        self.changePattern(pattern_msg)
+        self.changePattern.call_async(pattern_msg)
 
     @staticmethod
     def to_led_order(unordered_list):
@@ -115,8 +93,15 @@ class TrafficLightNode(DTROS):
         return ordered_list
 
 
+def main(args=None):
+    rclpy.init(args=args)
+
+    node = TrafficLightNode()
+
+    rclpy.spin(node)
+
+    rclpy.shutdown()
+
+
 if __name__ == "__main__":
-    # Initialize the node
-    traffic_light_node = TrafficLightNode(node_name="traffic_light")
-    # Keep it spinning to keep the node alive
-    rospy.spin()
+    main()

@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 import time
 
-import rospy
-from duckietown.dtros import DTROS, NodeType
+import rclpy
+from rclpy.node import Node
 from duckietown_msgs.msg import LEDPattern
 from rgb_led import RGB_LED
 
 from hardware_test_led import HardwareTestLED
+from duckietown.dtros import NodeType
 
 
-class LEDDriverNode(DTROS):
+class LEDDriverNode(Node):
     """Node for controlling LEDs.
 
     Calls the low-level functions of class :obj:`RGB_LED` that creates the PWM
@@ -37,19 +38,22 @@ class LEDDriverNode(DTROS):
 
     def __init__(self, node_name):
         # Initialize the DTROS parent class
-        super(LEDDriverNode, self).__init__(
-            node_name=node_name, node_type=NodeType.DRIVER
+        super().__init__(
+            node_name=node_name
         )
         # load params
-        self._idle = rospy.get_param("~idle")
+        self._idle = self.get_parameter("~idle").get_parameter_value().string_value
         # initialize LED library
         self.led = RGB_LED()
         # turn OFF the LEDs
         for i in range(5):
             self.led.set_RGB(i, self._idle["color"][i], self._idle["intensity"][i])
         # subscribers
-        self.sub_topic = rospy.Subscriber(
-            "~led_pattern", LEDPattern, self.led_cb, queue_size=1
+        self.sub_topic = self.create_subscription(
+            LEDPattern,
+            "~led_pattern",
+            self.led_cb,
+            10
         )
 
         # user hardware tests
@@ -61,7 +65,7 @@ class LEDDriverNode(DTROS):
         )
 
         # ---
-        self.log("Initialized.")
+        self.get_logger().info("Initialized.")
 
     def led_cb(self, msg):
         """Switches the LEDs to the requested signal."""
@@ -75,12 +79,22 @@ class LEDDriverNode(DTROS):
         At shutdown, changes the LED pattern to `LIGHT_OFF`.
         """
         # Turn off the lights when the node dies
-        self.loginfo("Shutting down. Turning LEDs off.")
+        self.get_logger().info("Shutting down. Turning LEDs off.")
         time.sleep(1)
 
 
-if __name__ == "__main__":
+def main(args=None):
+    rclpy.init(args=args)
+
     # Create the LEDdriverNode object
     led_driver_node = LEDDriverNode(node_name="led_driver_node")
+
     # Keep it spinning to keep the node alive
-    rospy.spin()
+    rclpy.spin(led_driver_node)
+
+    led_driver_node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

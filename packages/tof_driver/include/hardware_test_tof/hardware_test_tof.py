@@ -1,7 +1,8 @@
-import rospy
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Range
 
 from dt_duckiebot_hardware_tests import HardwareTest, HardwareTestJsonParamType
-
 from tof_accuracy import ToFAccuracy
 
 
@@ -33,12 +34,27 @@ class HardwareTestToF(HardwareTest):
         )
 
     def cb_run_test(self, _):
-        rospy.loginfo(f"[{self.test_id()}] Test service called.")
+        self.get_logger().info(f"[{self.test_id()}] Test service called.")
 
         # Return the service response
         return self.format_response_stream(
             success=True,  # does not matter here
             test_topic_name=f"{self._sensor_name}_tof_driver_node/range",
-            test_topic_type="sensor_msgs/Range",
+            test_topic_type=Range,
             lst_blocks=[],
         )
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    tof_test_node = HardwareTestToF("front_center", ToFAccuracy())
+
+    rclpy.spin(tof_test_node)
+
+    tof_test_node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

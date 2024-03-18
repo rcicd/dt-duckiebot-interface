@@ -3,7 +3,7 @@
 import cv2
 import time
 import psutil
-import rospy
+import rclpy
 import numpy as np
 from threading import Thread
 
@@ -40,8 +40,10 @@ class JetsonNanoCameraNode(AbsCameraNode):
         # Initialize the DTROS parent class
         super(JetsonNanoCameraNode, self).__init__()
         # parameters
-        self._allow_partial_fov = rospy.get_param("~allow_partial_fov", False)
-        self._use_hw_acceleration = rospy.get_param("~use_hw_acceleration", False)
+        self.declare_parameter("allow_partial_fov", False)
+        self._allow_partial_fov = self.get_parameter("allow_partial_fov").get_parameter_value().bool_value
+        self.declare_parameter("use_hw_acceleration", False)
+        self._use_hw_acceleration = self.get_parameter("use_hw_acceleration").get_parameter_value().bool_value
         # prepare gstreamer pipeline
         self._device = None
         # prepare data flow monitor
@@ -91,7 +93,8 @@ class JetsonNanoCameraNode(AbsCameraNode):
                             self.stop(force=True)
                             self.loginfo(f"[data-flow-monitor]: Camera cleared. Rebooting.")
                             # - exit camera node, roslaunch will respawn in 10 seconds
-                            rospy.signal_shutdown("Data flow monitor has closed the node")
+                            self.get_logger().info("Data flow monitor has closed the node")
+                            rclpy.shutdown()
                             time.sleep(1)
                             exit(1)
                         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
@@ -119,7 +122,7 @@ class JetsonNanoCameraNode(AbsCameraNode):
                     # with HW acceleration, the NVJPG Engine module is used to encode RGB -> JPEG
                     image = cast(np.ndarray, image)
                     image_msg = CompressedImage()
-                    image_msg.header.stamp = rospy.Time.now()
+                    image_msg.header.stamp = self.get_clock().now().to_msg()
                     image_msg.format = "jpeg"
                     image_msg.data = image.tobytes()
                 else:
@@ -228,8 +231,10 @@ class JetsonNanoCameraNode(AbsCameraNode):
 
 
 if __name__ == "__main__":
+    rclpy.init()
     # initialize the node
     camera_node = JetsonNanoCameraNode()
     camera_node.start()
     # keep the node alive
-    rospy.spin()
+    rclpy.spin(camera_node)
+    rclpy.shutdown()

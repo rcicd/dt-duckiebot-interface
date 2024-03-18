@@ -20,6 +20,8 @@ fi
 # set module's health
 dt-set-module-healthy
 
+/bin/bash
+
 # launching app
 dt-exec ros2 launch \
     duckiebot_interface all_drivers.launch \
@@ -27,7 +29,6 @@ dt-exec ros2 launch \
     robot_type:="$ROBOT_TYPE" \
     robot_configuration:="$ROBOT_CONFIGURATION"
 
-/bin/bash
 #ros launch example_robot_bringup bringup.launch.py
 
 # ----------------------------------------------------------------------------
