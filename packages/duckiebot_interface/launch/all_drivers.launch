@@ -37,16 +37,16 @@
 <!--     </group> -->
 
 <!--     Joystick: reads from a physical joystick and produces ROS messages -->
-<!--     <group if="$(eval '\'$(var robot_type)\' == \'duckiebot\'')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--         <set_env name="PARAM_FILE_NAME" value="$(var param_file_name)"/> -->
-<!--         <include file="$(find-pkg-share joystick)/launch/joystick_node.launch"/> -->
+    <group if="$(eval '\'$(var robot_type)\' == \'duckiebot\'')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <set_env name="PARAM_FILE_NAME" value="$(var param_file_name)"/>
+        <include file="$(find-pkg-share joystick)/launch/joystick_node.launch"/>
 
 <!-- Wheel Drivers: reads ROS messages and spins the motors -->
-<!--         <include file="$(find-pkg-share wheels_driver)/launch/wheels_driver_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--         <unset_env name="PARAM_FILE_NAME"/> -->
-<!--     </group> -->
+        <include file="$(find-pkg-share wheels_driver)/launch/wheels_driver_node.launch"/>
+        <unset_env name="VEH"/>
+        <unset_env name="PARAM_FILE_NAME"/>
+    </group>
 
 <!--      --><!-- Traffic Light (Traffic Light robot only): commands the LEDs of a traffic light -->
 <!--     <group if="$(eval '\'$(var robot_type)\' == \'traffic_light\'')"> -->

@@ -29,20 +29,20 @@ class WheelsDriverNode(Node):
         # Publisher for wheels command wih execution time
         self.pub_wheels_cmd = self.create_publisher(
             WheelsCmdStamped,
-            "~wheels_cmd_executed",
+            "wheels_cmd_executed",
             1
         )
 
         # Subscribers
         self.sub_topic = self.create_subscription(
             WheelsCmdStamped,
-            "~wheels_cmd",
+            "wheels_cmd",
             self.wheels_cmd_cb,
             1
         )
         self.sub_e_stop = self.create_subscription(
             BoolStamped,
-            "~emergency_stop",
+            "emergency_stop",
             self.estop_cb,
             1
         )

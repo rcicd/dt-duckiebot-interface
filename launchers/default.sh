@@ -20,8 +20,6 @@ fi
 # set module's health
 dt-set-module-healthy
 
-/bin/bash
-
 # launching app
 dt-exec ros2 launch \
     duckiebot_interface all_drivers.launch \

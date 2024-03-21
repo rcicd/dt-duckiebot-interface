@@ -31,13 +31,13 @@ class WheelEncoderNode(Node):
         # publisher for wheel encoder ticks
         self._tick_pub = self.create_publisher(
             WheelEncoderStamped,
-            "~tick",
+            "tick",
             1
         )
         # subscriber for the wheel command executed
         self.sub_wheels = self.create_subscription(
             WheelsCmdStamped,
-            "~wheels_cmd_executed",
+            "wheels_cmd_executed",
             self._wheels_cmd_executed_cb,
             1
         )
