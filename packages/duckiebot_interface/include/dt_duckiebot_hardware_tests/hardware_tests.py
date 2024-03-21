@@ -54,12 +54,12 @@ class HardwareTest(ABC, Node):
         super().__init__("hardware_test")
         self.description_srv = self.create_service(
             Trigger,
-            f"~{service_identifier}/description",
+            f"{service_identifier}/description",
             self.cb_description
         )
         self.test_srv = self.create_service(
             Trigger,
-            f"~{service_identifier}/run",
+            f"{service_identifier}/run",
             self.cb_run_test
         )
 

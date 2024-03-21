@@ -11,7 +11,7 @@ from rclpy.clock import ROSClock
 from duckietown_msgs.msg import WheelsCmdStamped, BoolStamped
 from wheels_driver.dagu_wheels_driver import DaguWheelsDriver
 
-from dt_duckiebot_hardware_tests import HardwareTestMotor, HardwareTestMotorSide
+from hardware_test_wheels import HardwareTestMotor, HardwareTestMotorSide
 
 
 class WheelsDriverNode(Node):
