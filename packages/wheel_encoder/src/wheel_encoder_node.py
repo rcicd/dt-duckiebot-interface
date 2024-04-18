@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os.path
 import rclpy
 from rclpy.node import Node
@@ -5,6 +7,9 @@ from rclpy.timer import Rate
 from rclpy.parameter import Parameter
 from tf2_ros import TransformBroadcaster
 from math import pi
+
+import uuid
+import yaml
 
 from std_msgs.msg import Header
 from duckietown_msgs.msg import WheelEncoderStamped, WheelsCmdStamped
@@ -17,7 +22,12 @@ from geometry_msgs.msg import TransformStamped, Transform, Quaternion
 class WheelEncoderNode(Node):
     def __init__(self):
         super(WheelEncoderNode, self).__init__('wheel_encoder_node')
-
+        self.declare_parameter("veh", "duckiebot")
+        self.declare_parameter("name", "")
+        self.declare_parameter("gpio", 0)
+        self.declare_parameter("resolution", 0)
+        self.declare_parameter("configuration", "")
+        self.declare_parameter("publish_frequency", 0.0)
         # get parameters
         self._veh = self.get_parameter("veh").get_parameter_value().string_value
         self._name = self.get_parameter("name").get_parameter_value().string_value
@@ -26,6 +36,16 @@ class WheelEncoderNode(Node):
         self._configuration = self.get_parameter("configuration").get_parameter_value().string_value
         self._publish_frequency = self.get_parameter("publish_frequency").get_parameter_value().double_value
 
+        for param in self._parameters:
+            print(f"Parameter {param}")
+
+        print(f"veh: {self._veh}",
+                f"name: {self._name}",
+                f"gpio: {self._gpio_pin}",
+                f"resolution: {self._resolution}",
+                f"configuration: {self._configuration}",
+                f"publish_frequency: {self._publish_frequency}",
+              sep="\n")
         # tick storage
         self._tick = 0
         # publisher for wheel encoder ticks
@@ -87,12 +107,13 @@ class WheelEncoderNode(Node):
         )
         # publish TF
         angle = (float(self._tick) / float(self._resolution)) * 2 * pi
-        quat = tf.transformations.quaternion_from_euler(0, angle, 0)
+        q = Quaternion(axis=[0, 1, 0], angle=angle)
+        quat = Quaternion(x=q.x, y=q.y, z=q.z, w=q.w)
         self._tf_broadcaster.sendTransform(
             TransformStamped(
                 header=header,
                 child_frame_id=f"{self._veh}/{self._name}_wheel",
-                transform=Transform(rotation=Quaternion(x=quat[0], y=quat[1], z=quat[2], w=quat[3])),
+                transform=Transform(rotation=Quaternion(x=quat.x, y=quat.y, z=quat.z, w=quat.w)),
             )
         )
 

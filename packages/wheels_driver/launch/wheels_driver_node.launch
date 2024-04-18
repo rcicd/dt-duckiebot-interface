@@ -4,6 +4,5 @@
     <let name="param_file_name" value="$(env PARAM_FILE_NAME 'default')"/>
 
     <node namespace="$(var veh)" pkg="wheels_driver" exec="wheels_driver_node.py" name="wheels_driver_node" output="screen"/>
-<!--      required="true" /> -->
 
 </launch>

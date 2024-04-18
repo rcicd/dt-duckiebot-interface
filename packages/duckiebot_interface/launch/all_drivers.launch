@@ -26,9 +26,9 @@
 <!--         </group> -->
 <!--     </group> -->
 
-<!--      --><!-- LED Driver: reads ROS messages and commands the LEDs -->
+<!--  i2c used -->
+<!-- LED Driver: reads ROS messages and commands the LEDs -->
 <!--     <group if="$(eval '\'$(var robot_type)\' in [\'duckiebot\', \'traffic_light\']')"> -->
-<!--         <remap from="led_driver_node/led_pattern" to="led_emitter_node/led_pattern"/> -->
 <!--         <set_env name="VEH" value="$(var veh)"/> -->
 <!--         <set_env name="PARAM_FILE_NAME" value="default"/> -->
 <!--         <include file="$(find-pkg-share led_driver)/launch/led_driver_node.launch"/> -->
@@ -36,6 +36,7 @@
 <!--         <unset_env name="PARAM_FILE_NAME"/> -->
 <!--     </group> -->
 
+<!--  i2c used -->
 <!--     Joystick: reads from a physical joystick and produces ROS messages -->
     <group if="$(eval '\'$(var robot_type)\' == \'duckiebot\'')">
         <set_env name="VEH" value="$(var veh)"/>
@@ -48,51 +49,48 @@
         <unset_env name="PARAM_FILE_NAME"/>
     </group>
 
-<!--      --><!-- Traffic Light (Traffic Light robot only): commands the LEDs of a traffic light -->
+<!-- Traffic Light (Traffic Light robot only): commands the LEDs of a traffic light -->
 <!--     <group if="$(eval '\'$(var robot_type)\' == \'traffic_light\'')"> -->
-<!--         <remap from="led_emitter_node/custom_pattern" to="~custom_pattern"/> -->
 <!--         <set_env name="VEH" value="$(var veh)"/> -->
 <!--         <include file="$(find-pkg-share traffic_light)/launch/traffic_light_node.launch"/> -->
 <!--         <unset_env name="VEH"/> -->
 <!--     </group> -->
 
+<!--  .gpio used -->
 <!--     Wheel Encoders (DB19 and above robot only): reads data from wheel encoders -->
     <group if="$(eval '\'$(var robot_type)\' == \'duckiebot\' and \'$(var robot_configuration)\' != \'DB18\'')">
 <!--         Left Wheel Encoder -->
-        <set_env name="VEH" value="$(var veh)"/>
-        <set_env name="WHEEL" value="left"/>
-        <set_env name="PARAM_FILE_NAME" value="left_wheel"/>
-        <include file="$(find-pkg-share wheel_encoder)/launch/wheel_encoder_node.launch"/>
 
-        <set_env name="WHEEL" value="right"/>
-        <set_env name="PARAM_FILE_NAME" value="right_wheel"/>
+        <include file="$(find-pkg-share wheel_encoder)/launch/wheel_encoder_node.launch.py">
+            <arg name="veh" value="$(var veh)"/>
+            <arg name="wheel" value="left"/>
+            <arg name="param_file_name" value="left_wheel.yaml"/>
+        </include>
 <!--         Right Wheel Encoder -->
-        <include file="$(find-pkg-share wheel_encoder)/launch/wheel_encoder_node.launch"/>
-        <unset_env name="VEH"/>
-        <unset_env name="WHEEL"/>
-        <unset_env name="PARAM_FILE_NAME"/>
+        <include file="$(find-pkg-share wheel_encoder)/launch/wheel_encoder_node.launch.py">
+            <arg name="veh" value="$(var veh)"/>
+            <arg name="wheel" value="right"/>
+            <arg name="param_file_name" value="right_wheel.yaml"/>
+        </include>
     </group>
 
 <!--     Time-of-Flight sensor: -->
 <!--     - DB21x: 1x ToF sensor at the Front Center      -->
-    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
-<!--         <remap from="front_center_tof_driver_node/fragments" to="display_driver_node/fragments"/> -->
-       <set_env name="VEH" value="$(var veh)"/>
-       <set_env name="NAME" value="front_center"/>
-       <include file="$(find-pkg-share tof_driver)/launch/tof_node.launch"/>
-       <unset_env name="VEH"/>
-       <unset_env name="NAME"/>
-    </group>
-
-<!--      --><!-- OLED Display driver: -->
 <!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')"> -->
-<!--         <remap from="display_driver_node/button" to="button_driver_node/event"/> -->
+<!--        <include file="$(find-pkg-share tof_driver)/launch/tof_node.launch.py"> -->
+<!--             <arg name="veh" value="$(var veh)"/> -->
+<!--             <arg name="name" value="front_center"/> -->
+<!--         </include> -->
+<!--     </group> -->
+
+<!-- OLED Display driver: -->
+<!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')"> -->
 <!--         <set_env name="VEH" value="$(var veh)"/> -->
 <!--         <include file="$(find-pkg-share display_driver)/launch/display_driver_node.launch"/> -->
 <!--         <unset_env name="VEH"/> -->
 <!--     </group> -->
 
-<!--      --><!-- Display renderers: -->
+<!-- Display renderers: -->
 <!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')"> -->
 <!--         <set_env name="VEH" value="$(var veh)"/> -->
 <!--          --><!-- health: renders health and usage info about the robot -->
@@ -104,30 +102,29 @@
 <!--         <unset_env name="VEH"/> -->
 <!--     </group> -->
 
-<!--      --><!-- Button driver -->
+<!-- Button driver -->
 <!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')"> -->
-<!--         <remap from="button_driver_node/fragments" to="display_driver_node/fragments"/> -->
 <!--         <set_env name="VEH" value="$(var veh)"/> -->
 <!--         <include file="$(find-pkg-share button_driver)/launch/button_driver_node.launch"/> -->
 <!--         <unset_env name="VEH"/> -->
 <!--     </group> -->
 
-<!--      --><!-- IMU sensor: -->
-    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\']')">
-        <set_env name="VEH" value="$(var veh)"/>
-        <include file="$(find-pkg-share imu_driver)/launch/imu_node.launch"/>
-        <unset_env name="VEH"/>
-    </group>
-
-<!--      --><!-- Robot HTTP API: provides an HTTP API through which we can control the Robot -->
-<!--     <group if="$(eval '\'$(var robot_type)\' not in [\'workstation\']')"> -->
+<!-- IMU sensor: -->
+<!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\']')"> -->
 <!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--         <set_env name="ROBOT_TYPE" value="$(var robot_type)"/> -->
-<!--         <set_env name="PARAM_FILE_NAME" value="$(var param_file_name)"/> -->
-<!--         <include file="$(find-pkg-share robot_http_api)/launch/robot_http_api_node.launch"/> -->
+<!--         <include file="$(find-pkg-share imu_driver)/launch/imu_node.launch"/> -->
 <!--         <unset_env name="VEH"/> -->
-<!--         <unset_env name="ROBOT_TYPE"/> -->
-<!--         <unset_env name="PARAM_FILE_NAME"/> -->
 <!--     </group> -->
+
+<!-- Robot HTTP API: provides an HTTP API through which we can control the Robot -->
+    <group if="$(eval '\'$(var robot_type)\' not in [\'workstation\']')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <set_env name="ROBOT_TYPE" value="$(var robot_type)"/>
+        <set_env name="PARAM_FILE_NAME" value="$(var param_file_name)"/>
+        <include file="$(find-pkg-share robot_http_api)/launch/robot_http_api_node.launch"/>
+        <unset_env name="VEH"/>
+        <unset_env name="ROBOT_TYPE"/>
+        <unset_env name="PARAM_FILE_NAME"/>
+    </group>
 
 </launch>

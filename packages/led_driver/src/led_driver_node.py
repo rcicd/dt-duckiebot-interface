@@ -42,7 +42,7 @@ class LEDDriverNode(Node):
             node_name=node_name
         )
         # load params
-        self._idle = self.get_parameter("~idle").get_parameter_value().string_value
+        self._idle = self.get_parameter("idle").get_parameter_value().string_value
         # initialize LED library
         self.led = RGB_LED()
         # turn OFF the LEDs
@@ -51,7 +51,7 @@ class LEDDriverNode(Node):
         # subscribers
         self.sub_topic = self.create_subscription(
             LEDPattern,
-            "~led_pattern",
+            "led_pattern",
             self.led_cb,
             10
         )

@@ -1,6 +1,6 @@
-wheel_encoder_node:
+/**:
   ros__parameters:
     gpio: 18
     resolution: 135
     configuration: "left"
-    publish_frequency: 30
+    publish_frequency: 30.0

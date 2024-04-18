@@ -40,7 +40,7 @@ class HardwareTestLED(HardwareTestLED, DTROS):
         self._color_sequence = None  # lazy init. If test is run, generate this
 
         # ROS Pubsub initialization
-        self.create_service(Empty, "~initialize_led", self.zero_sensor)
+        self.create_service(Empty, "initialize_led", self.zero_sensor)
 
     def _generate_colors(self, step_size: int = 1) -> List[Tuple[float, float, float]]:
         """Generate a smooth transition of colors"""

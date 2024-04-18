@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import rclpy
 from rclpy.node import Node
 from rclpy.timer import Rate
@@ -86,7 +88,7 @@ class TrafficLightNode(Node):
         Args:
             unordered_list (:obj:`list`): List to be ordered.
         Returns:
-            :obj: `list`: Permutated list of length ~number_leds.
+            :obj: `list`: Permutated list of length number_leds.
         """
         ordering = [0, 4, 1, 3, 2]
         ordered_list = [unordered_list[i] for i in ordering]

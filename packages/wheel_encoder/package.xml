@@ -6,13 +6,16 @@
 
     <author email="afdaniele@ttic.edu">Andrea F. Daniele</author>
     <maintainer email="afdaniele@ttic.edu">Andrea F. Daniele</maintainer>
+
     <license>GPLv3</license>
 
     <export>
         <build_type>ament_python</build_type>
     </export>
 
-    <depend>duckietown_msgs</depend>
     <depend>rclpy</depend>
+    <depend>geometry_msgs</depend>
+    <depend>tf2_ros</depend>
+    <depend>duckietown_msgs</depend>
     <depend>utils_package</depend>
 </package>

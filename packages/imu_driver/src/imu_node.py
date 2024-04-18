@@ -22,12 +22,12 @@ class IMUNode(DTROS):
         super(IMUNode, self).__init__(node_name="imu_node", node_type=NodeType.DRIVER)
 
         # get ROS/Duckiebot parameters
-        self._veh = self.get_parameter('~veh').get_parameter_value().string_value
-        self._i2c_connectors = self.get_parameter("~connectors").get_parameter_value().string_value
-        self._polling_hz = self.get_parameter("~polling_hz").get_parameter_value().double_value
-        self._temp_offset = self.get_parameter("~temp_offset").get_parameter_value().double_value
-        self._gyro_offset = self.get_parameter("~ang_vel_offset").get_parameter_value().double_value
-        self._accel_offset = self.get_parameter("~accel_offset").get_parameter_value().double_value
+        self._veh = self.get_parameter('veh').get_parameter_value().string_value
+        self._i2c_connectors = self.get_parameter("connectors").get_parameter_value().string_value
+        self._polling_hz = self.get_parameter("polling_hz").get_parameter_value().double_value
+        self._temp_offset = self.get_parameter("temp_offset").get_parameter_value().double_value
+        self._gyro_offset = self.get_parameter("ang_vel_offset").get_parameter_value().double_value
+        self._accel_offset = self.get_parameter("accel_offset").get_parameter_value().double_value
         self.get_logger().info("===============IMU Node Init Val===============")
         self.get_logger().info(f"Op Rate: {self._polling_hz}")
         self.get_logger().info("Acceleration Offset: X:%.2f, Y: %.2f, Z: %.2f m/s^2" % tuple(self._accel_offset))
@@ -47,9 +47,9 @@ class IMUNode(DTROS):
         self.get_logger().info("Temperature: %.2f C" % self._sensor.temperature)
         self.get_logger().info("===============IMU Initialization Complete===============")
         # ROS Pubsub initialization
-        self.pub = self.create_publisher(Imu, '~data', 10)
-        self.temp_pub = self.create_publisher(Temperature, '~temperature', 10)
-        self.create_service(Empty, "~initialize_imu", self.zero_sensor)
+        self.pub = self.create_publisher(Imu, 'data', 10)
+        self.temp_pub = self.create_publisher(Temperature, 'temperature', 10)
+        self.create_service(Empty, "initialize_imu", self.zero_sensor)
         self.timer = self.create_timer(1.0 / self._polling_hz, self.publish_data)
 
         # user hardware test

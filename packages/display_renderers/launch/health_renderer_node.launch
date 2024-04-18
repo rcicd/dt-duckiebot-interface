@@ -12,7 +12,7 @@
 <!--                required="$(var required)"> -->
             <remap from="$(var node_name)/fragments" to="display_driver_node/fragments"/>
             <param name="veh" value="$(var veh)" />
-            <param name="assets_dir" value="$(find duckiebot_interface)/images" />
+            <param name="assets_dir" value="$(find-pkg-share duckiebot_interface)/images" />
             <param from="$(find-pkg-share display_renderers)/config/$(var node_name)/$(var param_file_name).yaml"/>
         </node>
     </group>

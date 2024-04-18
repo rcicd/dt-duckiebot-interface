@@ -1,16 +1,19 @@
+#!/usr/bin/env python3
+
 import dataclasses
 import time
 from typing import Optional
+import yaml
 
 import rclpy
 from rclpy.node import Node
+from dt_class_utils import DTReminder
 from sensor_msgs.msg import Range
 from std_msgs.msg import Header
 
 from tof_accuracy import ToFAccuracy
 from hardware_test_tof import HardwareTestToF
-from dt_class_utils import DTReminder
-from dt_vl53l0x import VL53L0X
+from dt_vl53l0x.VL53L0X import VL53L0X
 from display_renderer import (
     DisplayROI,
     PAGE_TOF,
@@ -22,14 +25,29 @@ from display_renderer import (
 class ToFNode(Node):
     def __init__(self):
         super(ToFNode, self).__init__("tof_node")
-        # get parameters
+        self.declare_parameter("veh", "")
+        self.declare_parameter("connectors","")
+        self.declare_parameter("sensor_name", "")
+        self.declare_parameter("frequency", 0)
+        self.declare_parameter("mode", "")
+        self.declare_parameter("display_fragment_frequency", 0)
+
         self._veh = self.get_parameter("veh").get_parameter_value().string_value
-        self._i2c_connectors = self.get_parameter("connectors").get_parameter_value().string_value
+        connectors_string = self.get_parameter("connectors").get_parameter_value().string_value
+        self._i2c_connectors = yaml.safe_load(connectors_string)
         self._sensor_name = self.get_parameter("sensor_name").get_parameter_value().string_value
         self._frequency = self.get_parameter("frequency").get_parameter_value().integer_value
         self._mode = self.get_parameter("mode").get_parameter_value().string_value
         self._display_fragment_frequency = self.get_parameter("display_fragment_frequency").get_parameter_value().integer_value
         self._accuracy = ToFAccuracy.from_string(self._mode)
+        print(f"veh: {self._veh}",
+              f"connectors: {self._i2c_connectors}",
+              f"sensor_name: {self._sensor_name}",
+              f"frequency: {self._frequency}",
+              f"mode: {self._mode}",
+              f"display_fragment_frequency: {self._display_fragment_frequency}",
+              f"accuracy: {self._accuracy}",
+              sep="\n")
         # create a VL53L0X sensor handler
         self._sensor: Optional[VL53L0X] = self._find_sensor()
         if not self._sensor:
@@ -39,12 +57,12 @@ class ToFNode(Node):
         # create publisher
         self._pub = self.create_publisher(
             Range,
-            "~range",
+            "range",
             1
         )
         self._display_pub = self.create_publisher(
             DisplayFragment,
-            "~fragments",
+            "fragments",
             1
         )
         # user hardware test
@@ -72,12 +90,16 @@ class ToFNode(Node):
             self.get_logger().info(f"Trying to open device on connector {conn}")
             sensor = VL53L0X(i2c_bus=connector["bus"], i2c_address=connector["address"])
             try:
+                self.get_logger().info(f"Opening sensor")
                 sensor.open()
             except FileNotFoundError:
                 # i2c BUS not found
                 self.get_logger().warn(f"No devices found on connector {conn}, the bus does NOT exist")
                 continue
+
+            self.get_logger().info(f"Accuracy mode is set to {self._accuracy.mode}")
             sensor.start_ranging(self._accuracy.mode)
+            self.get_logger().info(f"Ranging ended")
             time.sleep(1)
             if sensor.get_distance() < 0:
                 self.get_logger().warn(f"No devices found on connector {conn}, but the bus exists")

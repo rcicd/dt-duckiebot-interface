@@ -13,10 +13,12 @@
         <build_type>ament_python</build_type>
     </export>
 
-    <depend>setuptools</depend>
+<!--    <depend>setuptools</depend>-->
     <depend>rclpy</depend>
     <depend>duckietown_msgs</depend>
     <depend>sensor_msgs</depend>
+    <depend>dt_class_utils</depend>
+    <depend>dt-vl53l0x</depend>
     <depend>std_msgs</depend>
     <depend>utils_package</depend>
 </package>

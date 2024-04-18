@@ -9,8 +9,6 @@ from sensor_msgs.msg import RegionOfInterest
 from std_msgs.msg import Header
 from display_renderer import DisplayROI, DisplayRegion, monospace_screen
 
-from duckietown.utils.image.ros import mono8_to_imgmsg, mono1_to_imgmsg
-
 
 class AbsDisplayFragmentRenderer(abc.ABC):
     def __init__(

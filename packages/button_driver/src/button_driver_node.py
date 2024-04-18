@@ -20,7 +20,6 @@ from dt_device_utils.device import shutdown_device
 from duckietown_msgs.msg import LEDPattern
 from std_msgs.msg import ColorRGBA
 from std_srvs.srv import Trigger, TriggerResponse
-from duckietown.dtros.utils import apply_namespace
 
 # display renderer for shutdown confirmation
 from display_renderer import (
@@ -41,11 +40,11 @@ class ButtonDriverNode(Node):
     def __init__(self):
         super().__init__("button_driver_node")
         # get parameters
-        self._led_gpio_pin = self.get_parameter("~led_gpio_pin").get_parameter_value().integer_value
-        self._signal_gpio_pin = self.get_parameter("~signal_gpio_pin").get_parameter_value().integer_value
+        self._led_gpio_pin = self.get_parameter("led_gpio_pin").get_parameter_value().integer_value
+        self._signal_gpio_pin = self.get_parameter("signal_gpio_pin").get_parameter_value().integer_value
         # create publishers
         self._pub = self.create_publisher(
-            ButtonEventMsg, "~event", 1
+            ButtonEventMsg, "event", 1
         )
         # create button driver
         self._button = ButtonDriver(self._led_gpio_pin, self._signal_gpio_pin, self._event_cb)
@@ -54,7 +53,7 @@ class ButtonDriverNode(Node):
         # shutdown confirmation service (for external methods of shutting down, e.g. dts/Dashboard):
         #   turn off LED, blink power LED, show Shutdown page on Display
         self._srv_shutdown_behavior = self.create_service(
-            Trigger, "~shutdown_behavior", self._srv_cb_shutdown_behavior,
+            Trigger, "shutdown_behavior", self._srv_cb_shutdown_behavior,
         )
         # create event holder
         self._ongoing_event = None
@@ -113,7 +112,7 @@ class ButtonDriverNode(Node):
         # publish a display showing shutdown confirmation
         _display_pub = self.create_publisher(
             DisplayFragment,
-            "~fragments",
+            "fragments",
             1,
         )
         _display_pub.publish(_renderer.as_msg())
@@ -127,7 +126,7 @@ class ButtonDriverNode(Node):
         # turn off LEDs
         _led_pub = self.create_publisher(
             LEDPattern,
-            apply_namespace("led_emitter_node/led_pattern", ns_level=1),
+            "led_emitter_node/led_pattern",
             1,
         )
         msg_led = LEDPattern()
@@ -170,11 +169,9 @@ class BatteryShutdownConfirmationRenderer(MonoImageFragmentRenderer):
         self.data[:, :] = contents
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = ButtonDriverNode()
-    rclpy.spin(node)
 
 
 if __name__ == "__main__":
-    main()
+    rclpy.init()
+    node = ButtonDriverNode()
+    rclpy.spin(node)

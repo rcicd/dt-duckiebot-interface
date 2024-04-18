@@ -1,3 +1,13 @@
+# This repo contains package of the driver pack designed for duckiebot hardware ported from ros to ros2
+## How to Use
+1. Clone this repo to your ros2 workspace
+2. Build the workspace
+3. Source the workspace
+4. Launch all hw drivers in detached mode with packages/duckiebot_interface/launch/all_drivers.launch
+5. Now you can subscribe and publish hw topics to control robot
+6. When you are in the same network as the robot, you can control it using teleop_twist_keyboard package
+7. As well, if you are in the same network, it is possible to access robot's status in real time via following the link in the following form `http://<robot_hostname>:8090/<needed_service>` (e.g. `http://duckiebot:8091/car/status`)
+
 # This repo contains ros package of the driver pack designed for duckiebot hardware, it supports Jetson Nano version, as well as the RaspberryPI version. 
 ## All Python dependencies are mentioned in dependencies-py3.txt (non-duckietown packages only) and dependencies-py3.dt.txt (duckietown packages only)
 

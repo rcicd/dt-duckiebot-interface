@@ -2,6 +2,7 @@
 
 import copy
 import rclpy
+from rclpy.node import Node
 import numpy as np
 
 from PIL import Image
@@ -15,7 +16,6 @@ from duckietown_msgs.msg import DisplayFragment as DisplayFragmentMsg
 from duckietown_msgs.msg import ButtonEvent as ButtonEventMsg
 
 from dt_class_utils import DTReminder
-from duckietown.dtros import DTROS, NodeType, TopicType
 
 from display_renderer import (
     REGION_FULL,
@@ -37,7 +37,7 @@ from duckietown.utils.image.ros import imgmsg_to_mono8
 from hardware_test_oled_display import HardwareTestOledDisplay
 
 
-class DisplayNode(DTROS):
+class DisplayNode(Node):
     _REGIONS = {
         DisplayFragmentMsg.REGION_FULL: REGION_FULL,
         DisplayFragmentMsg.REGION_HEADER: REGION_HEADER,
@@ -47,12 +47,12 @@ class DisplayNode(DTROS):
     _MAX_FREQUENCY_HZ = 5
 
     def __init__(self):
-        super(DisplayNode, self).__init__(node_name="display_driver_node", node_type=NodeType.DRIVER)
+        super(DisplayNode, self).__init__(node_name="display_driver_node")
         # get parameters
-        self._veh = self.get_parameter("~veh").get_parameter_value().string_value
-        self._i2c_bus = self.get_parameter("~bus", 1).get_parameter_value().integer_value
-        self._i2c_address = self.get_parameter("~address", 0x3C).get_parameter_value().integer_value
-        self._frequency = self.get_parameter("~frequency", 1).get_parameter_value().integer_value
+        self._veh = self.get_parameter("veh").get_parameter_value().string_value
+        self._i2c_bus = self.get_parameter("bus", 1).get_parameter_value().integer_value
+        self._i2c_address = self.get_parameter("address", 0x3C).get_parameter_value().integer_value
+        self._frequency = self.get_parameter("frequency", 1).get_parameter_value().integer_value
         # create a display handler
         serial = i2c(port=self._i2c_bus, address=self._i2c_address)
         self._display = ssd1306(serial)
@@ -73,13 +73,13 @@ class DisplayNode(DTROS):
         # create subscribers
         self._fragments_sub = self.create_subscription(
             DisplayFragmentMsg,
-            "~fragments",
+            "fragments",
             self._fragment_cb,
             10
         )
         self._button_sub = self.create_subscription(
             ButtonEventMsg,
-            "~button",
+            "button",
             self._button_event_cb,
             1
         )
