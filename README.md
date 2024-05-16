@@ -8,6 +8,37 @@
 6. When you are in the same network as the robot, you can control it using teleop_twist_keyboard package
 7. As well, if you are in the same network, it is possible to access robot's status in real time via following the link in the following form `http://<robot_hostname>:8090/<needed_service>` (e.g. `http://duckiebot:8091/car/status`)
 
+### HW Topics
+##### Wheels topics
+**wheels_cmd_executed**: 
+- `wheels_driver_node` publishes executed wheels command to this topic
+- `wheel_encoder_node` is subscribed to this topic
+- message type: `duckietown_msgs.msg.WheelsCmdStamped`
+
+**wheels_cmd**:
+- `wheels_driver_node` is subscribed to this topic and sends received commands to wheels
+- message type: `duckietown_msgs.msg.WheelsCmdStamped`
+
+**emergency_stop**:
+- `wheels_driver_node` is subscribed to this topic and stops wheels instantly when receives message
+- message type: `duckietown_msgs.msg.BoolStamped`
+
+**tick**:
+- `wheel_encoder_node` publishes wheel's ticks to this topic
+- message type: `duckietown_msgs.msg.WheelEncoderStamped`
+
+##### ToF topics
+
+**range**:
+- `tof_node` publishes distance to nearest object in front of robot to this topic
+- message type: sensor_msgs.msg.Range
+
+**fragments**:
+- `tof_node` publishes display rendering (if it is a good time to do so) to this topic
+- message type: sensor_msgs.msg.DisplayFragment
+
+
+
 # This repo contains ros package of the driver pack designed for duckiebot hardware, it supports Jetson Nano version, as well as the RaspberryPI version. 
 ## All Python dependencies are mentioned in dependencies-py3.txt (non-duckietown packages only) and dependencies-py3.dt.txt (duckietown packages only)
 
