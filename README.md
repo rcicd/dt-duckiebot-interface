@@ -1,43 +1,70 @@
-# This repo contains package of the driver pack designed for duckiebot hardware ported from ros to ros2
-## How to Use
-1. Clone this repo to your ros2 workspace
-2. Build the workspace
-3. Source the workspace
-4. Launch all hw drivers in detached mode with packages/duckiebot_interface/launch/all_drivers.launch
-5. Now you can subscribe and publish hw topics to control robot
-6. When you are in the same network as the robot, you can control it using teleop_twist_keyboard package
-7. As well, if you are in the same network, it is possible to access robot's status in real time via following the link in the following form `http://<robot_hostname>:8090/<needed_service>` (e.g. `http://duckiebot:8091/car/status`)
+# dt-duckiebot-interface
 
-### HW Topics
-##### Wheels topics
-**wheels_cmd_executed**: 
-- `wheels_driver_node` publishes executed wheels command to this topic
-- `wheel_encoder_node` is subscribed to this topic
-- message type: `duckietown_msgs.msg.WheelsCmdStamped`
+This is a duckietown repo that contains package of the driver pack designed for duckiebot hardware ported from ros to ros2
 
-**wheels_cmd**:
-- `wheels_driver_node` is subscribed to this topic and sends received commands to wheels
-- message type: `duckietown_msgs.msg.WheelsCmdStamped`
-
-**emergency_stop**:
-- `wheels_driver_node` is subscribed to this topic and stops wheels instantly when receives message
-- message type: `duckietown_msgs.msg.BoolStamped`
-
-**tick**:
-- `wheel_encoder_node` publishes wheel's ticks to this topic
-- message type: `duckietown_msgs.msg.WheelEncoderStamped`
-
-##### ToF topics
-
-**range**:
-- `tof_node` publishes distance to nearest object in front of robot to this topic
-- message type: sensor_msgs.msg.Range
-
-**fragments**:
-- `tof_node` publishes display rendering (if it is a good time to do so) to this topic
-- message type: sensor_msgs.msg.DisplayFragment
-
-
+Here is a list of packages that are used to run the duckiebot hardware:
+1. **adafruit_drivers**:
+    - is used by other packages in repo to communicate with the hardware
+    - **Status**: ported
+2. **button_driver**:
+    - is used to handle shutdown behavior triggered by pressing the button
+    - **Status**: not tested
+3. **camera_driver**:
+    - publishes camera images to `image/compressed` topic in CompressedImage format
+    - publishes camera info to `camera_info` topic in CameraInfo format
+    - **Status**: not tested
+4. **display_driver**:
+    - uses `fragments` topic to display info the screen
+    - **Status**: not tested
+5. **display_renderers**:
+    - uses `fragments` topic to display info the screen
+    - contains `health_renderer_node.py` that renders health info on the screen fetched from duckiebot health API (`http://<vehicle>.local/health/`)
+    - contains `network_renderer_node.py` that renders network info on the screen
+    - contains `robot_info_renderer_node.py` that renders robot info on the screen
+    - Fragments with the info should be added to Robot HTTP API to show it in dashboard
+    - **Status**: not tested
+6. **duckiebot_interface**:
+    - contains file `all_drivers.launch` that launches all the drivers
+    - **Status**: ported
+7. **duckietown_msgs**:
+    - contains modified duckietown messages and services for the duckiebot hardware
+    - Can be rewritten to remove the dependency on duckietown
+    - **Status**: ported, need revision as the package is being built for about 35 minutes in GitHub Actions
+8. **hat_driver**:
+    - contains python scripts to communicate with the hat
+    - **Status**: not tested
+9. **imu_driver**:
+    - publishes Imu messages to `data` topic
+    - publishes Temperature messages to `temperature` topic
+    - **Status**: not tested
+10. **joystick**:
+    - **Status**: not tested
+11. **led_driver**:
+    - is subscribed to `led_pattern` topic that receives LedPattern messages to set the led pattern
+    - **Status**: not tested
+12. **robot_http_api**:
+    - uses 8090 port for duckiebot (see [this file](packages/robot_http_api/include/dt_robot_rest_api/constants.py) with ports constants)
+    - flask server that provides API to get robot car status, initiate emergency stop and shutdown 
+    - health and network state should be added to the API
+    - **Status**: ported
+13. **tof_driver**:
+    - publishes Range messages to `range` topic
+    - publishes [DisplayFragment](packages/duckietown_msgs/msg/DisplayFragment.msg) messages to `fragments` topic
+    - **Status**: bug detected, segfault when trying to access sensor
+14. **traffic_light**:
+    - **Status**: not tested
+15. **utils**:
+    - Contains helper functions (not ros2-specific) for the drivers
+    - **Status**: created, works properly
+16. **wheel_encoder**:
+    - is subscribed to `wheels_cmd_executed` topic to get feedback on the wheels speed
+    - publishes to `tick` topic to get the wheel encoder ticks in [WheelEncoderStamped](packages/duckietown_msgs/msg/WheelEncoderStamped.msg) format
+    - **Status**: ported
+17. **wheels_driver**:
+    - gets WheelsCmdStamped messages from `wheels_cmd` topic to set wheels speed to certain values
+    - publishes to `wheels_cmd_executed` topic to get feedback on the wheels speed
+    - is subscribed to `emergency_stop` topic to stop the wheels when the [BoolStamped](packages/duckietown_msgs/msg/BoolStamped.msg) message is sent
+    - **Status:** ported
 
 # This repo contains ros package of the driver pack designed for duckiebot hardware, it supports Jetson Nano version, as well as the RaspberryPI version. 
 ## All Python dependencies are mentioned in dependencies-py3.txt (non-duckietown packages only) and dependencies-py3.dt.txt (duckietown packages only)

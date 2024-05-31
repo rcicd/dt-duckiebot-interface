@@ -28,9 +28,9 @@ class ToFNode(Node):
         self.declare_parameter("veh", "")
         self.declare_parameter("connectors","")
         self.declare_parameter("sensor_name", "")
-        self.declare_parameter("frequency", 0)
-        self.declare_parameter("mode", "")
-        self.declare_parameter("display_fragment_frequency", 0)
+        self.declare_parameter("frequency", 10)
+        self.declare_parameter("mode", "BETTER")
+        self.declare_parameter("display_fragment_frequency", 4)
 
         self._veh = self.get_parameter("veh").get_parameter_value().string_value
         connectors_string = self.get_parameter("connectors").get_parameter_value().string_value
@@ -87,7 +87,7 @@ class ToFNode(Node):
     def _find_sensor(self) -> Optional[VL53L0X]:
         for connector in self._i2c_connectors:
             conn: str = "[bus:{bus}](0x{address:02X})".format(**connector)
-            self.get_logger().info(f"Trying to open device on connector {conn}")
+            self.get_logger().info(f"Trying to open device on connector {conn}: connector[\"bus\"]={connector["bus"]} and connector[\"address\"]={connector["address"]}")
             sensor = VL53L0X(i2c_bus=connector["bus"], i2c_address=connector["address"])
             try:
                 self.get_logger().info(f"Opening sensor")
@@ -99,8 +99,8 @@ class ToFNode(Node):
 
             self.get_logger().info(f"Accuracy mode is set to {self._accuracy.mode}")
             sensor.start_ranging(self._accuracy.mode)
-            self.get_logger().info(f"Ranging ended")
             time.sleep(1)
+            self.get_logger().info(f"Ranging ended")
             if sensor.get_distance() < 0:
                 self.get_logger().warn(f"No devices found on connector {conn}, but the bus exists")
                 continue

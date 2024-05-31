@@ -22,6 +22,12 @@ class ShutdownBehaviorNode(Node):
             rclpy.spin(self)
             self.is_spinning = False
 
+    @property
+    def srv_proxy(self):
+        return self._srv_proxy
+
+
+node = None
 if ShutdownBehaviorNode.is_spinning is None:
     node = ShutdownBehaviorNode()
 
@@ -30,7 +36,7 @@ def _show_shutdown_behavior():
     global node
     try:
         req = Trigger.Request()
-        future = node._srv_proxy.call_async(req)
+        future = node.srv_proxy.call_async(req)
         rclpy.spin_until_future_complete(node, future)
         if future.result() is not None:
             resp = future.result()
@@ -40,5 +46,7 @@ def _show_shutdown_behavior():
                 return response_error(message=resp.message)
         else:
             node.get_logger().error('Exception while calling service: %r' % future.exception())
+            return response_error(message='Exception while calling service: %r' % future.exception())
     except Exception as e:
         node.get_logger().error('Failed to call service: %r' % e)
+        return response_error(message='Failed to call service: %r' % e)

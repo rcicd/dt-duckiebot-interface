@@ -17,7 +17,7 @@ def generate_launch_description():
         executable=node_name + '.py',
         output='screen',
         parameters=[
-            get_package_share_directory(pkg_name) + '/config/' + node_name + '/front_center.yaml',
+            get_package_share_directory(pkg_name) + f'/config/{node_name}/front_center.yaml',
             {'veh': LaunchConfiguration('veh')}
         ],
         remappings=[

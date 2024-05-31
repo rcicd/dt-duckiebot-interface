@@ -20,20 +20,16 @@ class WheelsDriverNode(Node):
 
         self.estop = False
 
-        # Setup the driver
         self.driver = DaguWheelsDriver()
 
-        # Initialize the executed commands message
         self.msg_wheels_cmd = WheelsCmdStamped()
 
-        # Publisher for wheels command wih execution time
         self.pub_wheels_cmd = self.create_publisher(
             WheelsCmdStamped,
             "wheels_cmd_executed",
             1
         )
 
-        # Subscribers
         self.sub_topic = self.create_subscription(
             WheelsCmdStamped,
             "wheels_cmd",
@@ -47,7 +43,6 @@ class WheelsDriverNode(Node):
             1
         )
 
-        # user hardware tests
         self._hardware_test_left = HardwareTestMotor(HardwareTestMotorSide.LEFT, self.driver)
         self._hardware_test_right = HardwareTestMotor(HardwareTestMotorSide.RIGHT, self.driver)
 
@@ -62,9 +57,7 @@ class WheelsDriverNode(Node):
             vel_right = msg.vel_right
 
         self.driver.set_wheels_speed(left=vel_left, right=vel_right)
-        # Put the wheel commands in a message and publish
         self.msg_wheels_cmd.header = msg.header
-        # Record the time the command was given to the wheels_driver
         self.msg_wheels_cmd.header.stamp = self.get_clock().now().to_msg()
         self.msg_wheels_cmd.vel_left = vel_left
         self.msg_wheels_cmd.vel_right = vel_right

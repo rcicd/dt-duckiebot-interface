@@ -16,12 +16,13 @@ class EstopNode(Node):
             return
         self.is_spinning = False
         self._pub = self.create_publisher(Bool, "estop", 1)
-        self._sub = self.create_subscription(Bool, "estop", self._estop_cb, 1)
+        self._sub = self.create_subscription(Bool, "estop", self.estop_cb, 1)
 
-    def _estop_cb(self, msg):
+    def estop_cb(self, msg):
         self._estop_value = msg.data
 
-    def _estop(self, value: bool):
+    def estop(self, value: bool):
+        node.get_logger().info('Entering estop')
         self._pub.publish(Bool(data=value))
         return response_ok({})
 
@@ -31,6 +32,12 @@ class EstopNode(Node):
             rclpy.spin(self)
             self.is_spinning = False
 
+    @property
+    def estop_value(self):
+        return self._estop_value
+
+
+node = None
 if EstopNode.is_spinning is None:
     node = EstopNode()
 
@@ -38,16 +45,16 @@ if EstopNode.is_spinning is None:
 def _estop_on():
     # return current API car_estop
     global node
-    return node._estop(True)
+    return node.estop(True)
 
 @estop_bp.route("/estop/status")
 def _estop_status():
     global node
     # return current API car_estop
-    return response_ok({"engaged": node._estop_value})
+    return response_ok({"engaged": node.estop_value})
 
 @estop_bp.route("/estop/off")
 def _estop_off():
     global node
     # return current API car_estop
-    return node._estop(False)
+    return node.estop(False)

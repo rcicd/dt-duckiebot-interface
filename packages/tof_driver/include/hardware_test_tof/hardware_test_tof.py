@@ -45,16 +45,16 @@ class HardwareTestToF(HardwareTest):
         )
 
 
-def main(args=None):
-    rclpy.init(args=args)
-
-    tof_test_node = HardwareTestToF("front_center", ToFAccuracy())
-
-    rclpy.spin(tof_test_node)
-
-    tof_test_node.destroy_node()
-    rclpy.shutdown()
-
-
-if __name__ == "__main__":
-    main()
+# def main(args=None):
+#     rclpy.init(args=args)
+#
+#     tof_test_node = HardwareTestToF("front_center", ToFAccuracy())
+#
+#     rclpy.spin(tof_test_node)
+#
+#     tof_test_node.destroy_node()
+#     rclpy.shutdown()
+#
+#
+# if __name__ == "__main__":
+#     main()
