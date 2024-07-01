@@ -79,7 +79,7 @@ class AbsCameraNode(ABC, Node):
 
         # locate calibration yaml file or use the default otherwise
         if not os.path.isfile(self.cali_file):
-            self.get_logger().warn("Calibration not found: %s.\n Using default instead." % self.cali_file)
+            self.get_logger().warn(f"Calibration not found: {self.cali_file}.\n Using default instead.")
             self.cali_file = self.cali_file_folder + "default.yaml"
 
         # shutdown if no calibration file not found
@@ -91,7 +91,7 @@ class AbsCameraNode(ABC, Node):
         self.original_camera_info.header.frame_id = self.frame_id
         self.current_camera_info = copy.deepcopy(self.original_camera_info)
         self.update_camera_params()
-        self.log("Using calibration file: %s" % self.cali_file)
+        self.get_logger().info(f"Using calibration file: {self.cali_file}")
 
         # user hardware test
         self._hardware_test = HardwareTestCamera()
@@ -124,7 +124,7 @@ class AbsCameraNode(ABC, Node):
         # monitor
         self._last_image_published_time = 0
         # ---
-        self.log("[AbsCameraNode]: Initialized.")
+        self.get_logger().info("[AbsCameraNode]: Initialized.")
 
     @property
     def is_stopped(self):
@@ -163,30 +163,30 @@ class AbsCameraNode(ABC, Node):
         self._last_image_published_time = time.time()
         # ---
         if not self._has_published:
-            self.log("Published the first image.")
+            self.get_logger().info("Published the first image.")
             self._has_published = True
 
     def start(self):
         """
         Begins the camera capturing.
         """
-        self.log("Start capturing.")
+        self.get_logger().info("Start capturing.")
         # ---
         try:
             try:
                 self.setup()
             except RuntimeError as e:
-                self.get_logger().info(str(e))
+                self.get_logger().warn(str(e))
                 rclpy.shutdown()
                 return
             # run camera thread
             self._worker = Thread(target=self.run, daemon=True)
             self._worker.start()
         except StopIteration:
-            self.log("Exception thrown.")
+            self.get_logger().info("Exception thrown.")
 
     def stop(self, force: bool = False):
-        self.loginfo("Stopping camera...")
+        self.get_logger().info("Stopping camera...")
         self._is_stopped = True
         if not force:
             # wait for the camera thread to finish
@@ -198,7 +198,7 @@ class AbsCameraNode(ABC, Node):
         self.release(force=force)
         time.sleep(1)
         self._is_stopped = False
-        self.loginfo("Camera stopped.")
+        self.get_logger().info("Camera stopped.")
 
     @abstractmethod
     def setup(self):
@@ -216,7 +216,7 @@ class AbsCameraNode(ABC, Node):
         self.stop(force=True)
 
     def srv_set_camera_info_cb(self, req):
-        self.log("[srv_set_camera_info_cb] Callback!")
+        self.get_logger().info("[srv_set_camera_info_cb] Callback!")
         filename = self.cali_file_folder + self.get_namespace().rstrip("/") + ".yaml"
         response = SetCameraInfo.Response()
         response.success = self.save_camera_info(req.camera_info, filename)
@@ -231,7 +231,7 @@ class AbsCameraNode(ABC, Node):
             filename (:obj:`str`): filename where to save calibration
         """
         # Convert camera_info_msg and save to a yaml file
-        self.log("[save_camera_info] filename: %s" % filename)
+        self.get_logger().info(f"[save_camera_info] filename: {filename}")
 
         # Converted from camera_info_manager.py
         calib = {
@@ -244,7 +244,7 @@ class AbsCameraNode(ABC, Node):
             "rectification_matrix": {"data": camera_info_msg.R, "rows": 3, "cols": 3},
             "projection_matrix": {"data": camera_info_msg.P, "rows": 3, "cols": 4},
         }
-        self.log("[save_camera_info] calib %s" % calib)
+        self.get_logger().info(f"[save_camera_info] calib {calib}")
         try:
             f = open(filename, "w")
             yaml.safe_dump(calib, f)
@@ -274,7 +274,7 @@ class AbsCameraNode(ABC, Node):
         self.current_camera_info.width = self._res_w.value
 
         # adjust the K matrix
-        self.current_camera_info.K = np.array(self.original_camera_info.K) * scale_matrix
+        self.current_camera_info.k = np.array(self.original_camera_info.k) * scale_matrix
 
         # adjust the P matrix
         scale_matrix = np.ones(12)
@@ -282,7 +282,7 @@ class AbsCameraNode(ABC, Node):
         scale_matrix[2] *= scale_width
         scale_matrix[5] *= scale_height
         scale_matrix[6] *= scale_height
-        self.current_camera_info.P = np.array(self.original_camera_info.P) * scale_matrix
+        self.current_camera_info.p = np.array(self.original_camera_info.p) * scale_matrix
 
     @staticmethod
     def load_camera_info(filename):
@@ -302,9 +302,9 @@ class AbsCameraNode(ABC, Node):
         cam_info = CameraInfo()
         cam_info.width = calib_data["image_width"]
         cam_info.height = calib_data["image_height"]
-        cam_info.K = calib_data["camera_matrix"]["data"]
-        cam_info.D = calib_data["distortion_coefficients"]["data"]
-        cam_info.R = calib_data["rectification_matrix"]["data"]
-        cam_info.P = calib_data["projection_matrix"]["data"]
+        cam_info.k = calib_data["camera_matrix"]["data"]
+        cam_info.d = calib_data["distortion_coefficients"]["data"]
+        cam_info.r = calib_data["rectification_matrix"]["data"]
+        cam_info.p = calib_data["projection_matrix"]["data"]
         cam_info.distortion_model = calib_data["distortion_model"]
         return cam_info

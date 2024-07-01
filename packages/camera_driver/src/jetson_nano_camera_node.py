@@ -39,19 +39,21 @@ class JetsonNanoCameraNode(AbsCameraNode):
     def __init__(self):
         # Initialize the DTROS parent class
         super(JetsonNanoCameraNode, self).__init__()
+        # prepare gstreamer pipeline
+        self._device = None
+        self._allow_partial_fov = False
+        self._use_hw_acceleration = False
         # parameters
         self.declare_parameter("allow_partial_fov", False)
         self._allow_partial_fov = self.get_parameter("allow_partial_fov").get_parameter_value().bool_value
         self.declare_parameter("use_hw_acceleration", False)
         self._use_hw_acceleration = self.get_parameter("use_hw_acceleration").get_parameter_value().bool_value
-        # prepare gstreamer pipeline
-        self._device = None
         # prepare data flow monitor
         self._flow_monitor = Thread(target=self._flow_monitor_fcn)
         self._flow_monitor.setDaemon(True)
         self._flow_monitor.start()
         # ---
-        self.log("[JetsonNanoCameraNode]: Initialized.")
+        self.get_logger().info("[JetsonNanoCameraNode]: Initialized.")
 
     def _flow_monitor_fcn(self):
         i = 0
@@ -62,9 +64,9 @@ class JetsonNanoCameraNode(AbsCameraNode):
                 elapsed_since_last = time.time() - self._last_image_published_time
                 # reset nvargus if no images were received within the last 10 secs
                 if elapsed_since_last >= 10:
-                    self.loginfo(
-                        f"[data-flow-monitor]: Detected a period of "
-                        f"{int(elapsed_since_last)} seconds during which no "
+                    self.get_logger().info(
+                        f"[data-flow-monitor]: Detected a period of " +
+                        f"{int(elapsed_since_last)} seconds during which no " +
                         f"images were produced, restarting camera process."
                     )
                     # find PID of the nvargus process
@@ -80,18 +82,18 @@ class JetsonNanoCameraNode(AbsCameraNode):
                             if not process_bin.startswith("/usr/sbin/nvargus-daemon"):
                                 continue
                             # this is the one we are looking for
-                            self.loginfo(
-                                f"[data-flow-monitor]: Process 'nvargus-daemon' found "
+                            self.get_logger().info(
+                                f"[data-flow-monitor]: Process 'nvargus-daemon' found " +
                                 f"with PID #{proc.pid}"
                             )
                             # - kill nvargus
-                            self.loginfo(f"[data-flow-monitor]: Killing nvargus.")
+                            self.get_logger().info(f"[data-flow-monitor]: Killing nvargus.")
                             proc.kill()
                             time.sleep(1)
                             # - stop camera node, then wait 10 seconds
-                            self.loginfo(f"[data-flow-monitor]: Clearing camera...")
+                            self.get_logger().info(f"[data-flow-monitor]: Clearing camera...")
                             self.stop(force=True)
-                            self.loginfo(f"[data-flow-monitor]: Camera cleared. Rebooting.")
+                            self.get_logger().info(f"[data-flow-monitor]: Camera cleared. Rebooting.")
                             # - exit camera node, roslaunch will respawn in 10 seconds
                             self.get_logger().info("Data flow monitor has closed the node")
                             rclpy.shutdown()
@@ -100,7 +102,7 @@ class JetsonNanoCameraNode(AbsCameraNode):
                         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                             pass
                     if not killed:
-                        self.loginfo("[data-flow-monitor]: Process 'nvargus-daemon' not found.")
+                        self.get_logger().info("[data-flow-monitor]: Process 'nvargus-daemon' not found.")
             # ---
             i += 1
             time.sleep(1)
@@ -111,7 +113,7 @@ class JetsonNanoCameraNode(AbsCameraNode):
         Captures a frame from the /dev/video2 image sink and publishes it.
         """
         if self._device is None or not self._device.isOpened():
-            self.logerr("Device was found closed")
+            self.get_logger().info("Device was found closed")
             return
         # get first frame
         retval, image = self._device.read() if self._device else (False, None)
@@ -134,7 +136,7 @@ class JetsonNanoCameraNode(AbsCameraNode):
                 self.publish(image_msg)
             # grab next frame
             retval, image = self._device.read() if self._device else (False, None)
-        self.loginfo("Camera worker stopped.")
+        self.get_logger().info("Camera worker stopped.")
 
     def setup(self):
         if self._device is None:
@@ -142,7 +144,7 @@ class JetsonNanoCameraNode(AbsCameraNode):
         # check if the device is opened
         if self._device is None:
             msg = "OpenCV cannot open gstreamer resource"
-            self.logerr(msg)
+            self.get_logger().info(msg)
             raise RuntimeError(msg)
         # open the device
         if not self._device.isOpened():
@@ -151,31 +153,32 @@ class JetsonNanoCameraNode(AbsCameraNode):
                 # make sure the device is open
                 if not self._device.isOpened():
                     msg = "OpenCV cannot open gstreamer resource"
-                    self.logerr(msg)
+                    self.get_logger().info(msg)
                     raise RuntimeError(msg)
                 # try getting a sample image
                 retval, _ = self._device.read()
                 if not retval:
                     msg = "Could not read image from camera"
-                    self.logerr(msg)
+                    self.get_logger().info(msg)
                     raise RuntimeError(msg)
-            except (Exception, RuntimeError):
+            except (Exception, RuntimeError) as e:
                 self.stop()
                 msg = "Could not start camera"
-                self.logerr(msg)
+                self.get_logger().info(msg)
+                self.get_logger().info(f"{e}")
                 raise RuntimeError(msg)
 
     def release(self, force: bool = False):
         if self._device is not None:
             if force:
-                self.loginfo("Forcing release of the GST pipeline...")
+                self.get_logger().info("Forcing release of the GST pipeline...")
             else:
-                self.loginfo("Releasing GST pipeline...")
+                self.get_logger().info("Releasing GST pipeline...")
                 try:
                     self._device.release()
                 except Exception:
                     pass
-        self.loginfo("GST pipeline released.")
+        self.get_logger().info("GST pipeline released.")
         self._device = None
 
     def gst_pipeline_string(self):
@@ -185,7 +188,7 @@ class JetsonNanoCameraNode(AbsCameraNode):
         camera_mode = self.get_mode(res_w, res_h, fps, fov)
         # cap frequency
         if fps > camera_mode.fps:
-            self.logwarn(
+            self.get_logger().warn(
                 "Camera framerate({}fps) too high for the camera mode (max: {}fps), "
                 "capping at {}fps.".format(fps, camera_mode.fps, camera_mode.fps)
             )
@@ -218,7 +221,7 @@ class JetsonNanoCameraNode(AbsCameraNode):
                 camera_mode.id, *exposure_time, self._res_w.value, self._res_h.value, fps
             )
         # ---
-        self.logdebug("Using GST pipeline: `{}`".format(gst_pipeline))
+        self.get_logger().debug("Using GST pipeline: `{}`".format(gst_pipeline))
         return gst_pipeline
 
     def get_mode(self, width: int, height: int, fps: int, fov: Tuple[str]) -> CameraMode:
@@ -238,3 +241,25 @@ if __name__ == "__main__":
     # keep the node alive
     rclpy.spin(camera_node)
     rclpy.shutdown()
+
+
+# """ \
+#                 nvarguscamerasrc sensor-id=0\
+#                 sensor-mode={} exposuretimerange="100000 80000000" ! \
+#                 video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! \
+#                 nvvidconv !
+#                 video/x-raw, format=BGRx !
+#                 videoconvert ! \
+#                 appsink max-buffers=1 drop=True\
+#             """.format(
+#     3, 640, 480, 30
+# )
+#
+# "nvarguscamerasrc sensor-id=%d ! "
+# "video/x-raw(memory:NVMM), "
+# "width=(int)%d, height=(int)%d, "
+# "format=(string)NV12, framerate=(fraction)%d/1 ! "
+# "nvvidconv flip-method=%d ! "
+# "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+# "videoconvert ! "
+# "video/x-raw, format=(string)BGR ! appsink max-buffers=1 drop=True"
