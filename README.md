@@ -12,7 +12,7 @@ Here is a list of packages that are used to run the duckiebot hardware:
 3. **camera_driver**:
     - publishes camera images to `image/compressed` topic in CompressedImage format
     - publishes camera info to `camera_info` topic in CameraInfo format
-    - **Status**: not tested
+    - **Status**: ported
 4. **display_driver**:
     - uses `fragments` topic to display info the screen
     - **Status**: not tested
