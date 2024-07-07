@@ -12,5 +12,15 @@
     </export>
     <depend>utils_package</depend>
     <depend>rclpy</depend>
+    <depend>xacro</depend>
+    <depend>urdf</depend>
+    <exec_depend>controller_manager</exec_depend>
+    <exec_depend>ros2_control</exec_depend>
+    <exec_depend>ros2_controllers</exec_depend>
+    <depend>hardware_interface</depend>
+    <depend>rclcpp</depend>
+    <depend>rclcpp_lifecycle</depend>
+    <depend>duckietown_msgs</depend>
+    <depend>robot_state_publisher</depend>
 
 </package>

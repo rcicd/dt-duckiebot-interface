@@ -43,10 +43,9 @@ class JetsonNanoCameraNode(AbsCameraNode):
         self._device = None
         self._allow_partial_fov = False
         self._use_hw_acceleration = False
-        # parameters
-        self.declare_parameter("allow_partial_fov", False)
+        self.is_shutdown = False
+    # parameters
         self._allow_partial_fov = self.get_parameter("allow_partial_fov").get_parameter_value().bool_value
-        self.declare_parameter("use_hw_acceleration", False)
         self._use_hw_acceleration = self.get_parameter("use_hw_acceleration").get_parameter_value().bool_value
         # prepare data flow monitor
         self._flow_monitor = Thread(target=self._flow_monitor_fcn)

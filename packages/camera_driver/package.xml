@@ -18,4 +18,5 @@
     <depend>cv_bridge</depend>
     <depend>sensor_msgs</depend>
     <depend>std_msgs</depend>
+    <depend>image_transport_plugins</depend>
 </package>

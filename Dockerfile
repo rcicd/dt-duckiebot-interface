@@ -1,100 +1,92 @@
-# parameters
-ARG REPO_NAME="dt-duckiebot-interface"
-ARG DESCRIPTION="Contains all the drivers needed to communicate with sensors and actuators on a Duckietown device"
-ARG MAINTAINER="Andrea F. Daniele (afdaniele@duckietown.com)"
-# pick an icon from: https://fontawesome.com/v4.7.0/icons/
-ARG ICON="wrench"
+FROM nvcr.io/nvidia/l4t-base:r36.2.0
+SHELL ["/bin/bash", "-c"]
 
-# ==================================================>
-# ==> Do not change the code below this line
-ARG ARCH
-ARG DISTRO=daffy
-ARG DOCKER_REGISTRY=docker.io
-ARG BASE_IMAGE=dt-ros-commons
-ARG BASE_TAG=${DISTRO}-${ARCH}
-ARG LAUNCHER=default
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nvidia-opencv-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# define base image
-FROM ${DOCKER_REGISTRY}/duckietown/${BASE_IMAGE}:${BASE_TAG} as base
+#INSTALL ROS2 iron
 
-# recall all arguments
-ARG DISTRO
-ARG REPO_NAME
-ARG DESCRIPTION
-ARG MAINTAINER
-ARG ICON
-ARG BASE_TAG
-ARG BASE_IMAGE
-ARG LAUNCHER
-# - buildkit
-ARG TARGETPLATFORM
-ARG TARGETOS
-ARG TARGETARCH
-ARG TARGETVARIANT
+RUN apt update && apt install curl -y
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+RUN apt update
+RUN apt upgrade -y
 
-# check build arguments
-RUN dt-build-env-check "${REPO_NAME}" "${MAINTAINER}" "${DESCRIPTION}"
+ENV TZ=Europe/Nicosia
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apt-get update && apt-get install -y tzdata
 
-# define/create repository path
-ARG REPO_PATH="${CATKIN_WS_DIR}/src/${REPO_NAME}"
-ARG LAUNCH_PATH="${LAUNCH_DIR}/${REPO_NAME}"
-RUN mkdir -p "${REPO_PATH}" "${LAUNCH_PATH}"
-WORKDIR "${REPO_PATH}"
+RUN apt install ros-iron-desktop -y
 
-# keep some arguments as environment variables
-ENV DT_MODULE_TYPE="${REPO_NAME}" \
-    DT_MODULE_DESCRIPTION="${DESCRIPTION}" \
-    DT_MODULE_ICON="${ICON}" \
-    DT_MAINTAINER="${MAINTAINER}" \
-    DT_REPO_PATH="${REPO_PATH}" \
-    DT_LAUNCH_PATH="${LAUNCH_PATH}" \
-    DT_LAUNCHER="${LAUNCHER}"
+RUN set -eux; \
+       key='C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654'; \
+       export GNUPGHOME="$(mktemp -d)"; \
+       gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
+       mkdir -p /usr/share/keyrings; \
+       gpg --batch --export "$key" > /usr/share/keyrings/ros2-latest-archive-keyring.gpg; \
+       gpgconf --kill all; \
+       rm -rf "$GNUPGHOME"
 
-# install apt dependencies
-COPY ./dependencies-apt.txt "${REPO_PATH}/"
-RUN dt-apt-install ${REPO_PATH}/dependencies-apt.txt
+#RUN echo "deb [ signed-by=/usr/share/keyrings/ros2-latest-archive-keyring.gpg ] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2-latest.list
 
-# install python3 dependencies
-ARG PIP_INDEX_URL="https://pypi.org/simple/"
-ENV PIP_INDEX_URL=${PIP_INDEX_URL}
-COPY ./dependencies-py3.* "${REPO_PATH}/"
-RUN dt-pip3-install "${REPO_PATH}/dependencies-py3.*"
+#RUN apt-get update && apt-get install -y --no-install-recommends \
+#    ros-iron-ros-core=0.10.0-3* \
+#    && rm -rf /var/lib/apt/lists/*
 
-# copy the source code
-COPY ./packages "${REPO_PATH}/packages"
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    python3-colcon-common-extensions \
+    python3-colcon-mixin \
+    python3-rosdep \
+    python3-vcstool \
+    && rm -rf /var/lib/apt/lists/*
 
-# build packages
-RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
-  catkin build \
-    --workspace ${CATKIN_WS_DIR}/
+ENV ROS_DISTRO iron
+# bootstrap rosdep
+RUN rosdep init && \
+  rosdep update --rosdistro $ROS_DISTRO
 
-# install launcher scripts
-COPY ./launchers/. "${LAUNCH_PATH}/"
-RUN dt-install-launchers "${LAUNCH_PATH}"
+# setup colcon mixin and metadata
+RUN colcon mixin add default \
+      https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml && \
+    colcon mixin update && \
+    colcon metadata add default \
+      https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml && \
+    colcon metadata update
 
-# define default command
-CMD ["bash", "-c", "dt-launcher-${DT_LAUNCHER}"]
+# Nadia's
+ENV SOURCE_DIR /app/duckiebot_interface
+RUN apt update && apt-get update
+ENV SOURCE_REPO duckiebot_interface
+ENV ROS2_SOURCE /opt/ros/iron/setup.sh
+ENV ROBOT_HARDWARE jetson_nano
+ENV ROBOT_CONFIGURATION DB21M
+ENV VEHICLE_NAME example_robot
+ENV PROJECT_NAME example_project
+ENV DEFAULT_LAUNCH /app/duckiebot_interface/launchers/default.sh
+ENV PARALLEL_WORKERS 4
+RUN apt-get -q install -y bc build-essential bzip2 can-utils curl freeglut3-dev git gnupg2 i2c-tools lsb-release python3 python3-dev python3-pip software-properties-common tmux vim wget nano
+COPY assets/dt-commons/packages /app/duckiebot_interface/dt-common/packages
+COPY assets/dt-commons/assets/bin /usr/local/bin/
+COPY assets/dt-commons/assets/entrypoint.sh /entrypoint.sh
+COPY assets/dt-commons/assets/environment.sh /environment.sh
+COPY ./launchers /app/duckiebot_interface/launchers
+COPY ./packages /app/duckiebot_interface/packages
+COPY ./assets/etc/ld.so.conf.d/nvidia-tegra.conf /etc/ld.so.conf.d/nvidia-tegra.conf
+COPY ./assets/usr/share/fonts/*.ttf /usr/share/fonts/
+COPY ./scripts /app/
+WORKDIR /app
 
-# store module metadata
-LABEL org.duckietown.label.module.type="${REPO_NAME}" \
-    org.duckietown.label.module.description="${DESCRIPTION}" \
-    org.duckietown.label.module.icon="${ICON}" \
-    org.duckietown.label.platform.os="${TARGETOS}" \
-    org.duckietown.label.platform.architecture="${TARGETARCH}" \
-    org.duckietown.label.platform.variant="${TARGETVARIANT}" \
-    org.duckietown.label.code.location="${REPO_PATH}" \
-    org.duckietown.label.code.version.distro="${DISTRO}" \
-    org.duckietown.label.base.image="${BASE_IMAGE}" \
-    org.duckietown.label.base.tag="${BASE_TAG}" \
-    org.duckietown.label.maintainer="${MAINTAINER}"
-# <== Do not change the code above this line
-# <==================================================
+RUN apt-get -y update && apt-get -q install -y udev
+RUN apt-get -y update && apt-get -q install -y ros-iron-tf2-ros ros-iron-joy
+RUN pip3 -q install  flask Flask-Cors dt-vl53l0x==1.0.0 Jetson.GPIO==2.0.20 luma.oled==3.13.0 adafruit-circuitpython-mpu6050==1.2.4 colorir==2.0.1 Pillow==9.5.0 requests setuptools
 
-# force reinstall RPi.GPIO to remove nVidia's dummy RPi libraries
-RUN python3 -m pip install --ignore-installed --force-reinstall RPi.GPIO
+RUN rosdep install -q -y -i --from-path . --rosdistro iron -r --skip-keys="gazebo_ros gazebo_ros2_control"
 
-# this is necessary for the camera pipeline to work on the Jetson Nano
-COPY assets/etc/ld.so.conf.d/nvidia-tegra.conf /etc/ld.so.conf.d/nvidia-tegra.conf
-
-# copy fonts
-COPY assets/usr/share/fonts/*.ttf /usr/share/fonts/
+WORKDIR /app/.
+RUN source ${ROS2_SOURCE} && colcon build --parallel-workers ${PARALLEL_WORKERS}
+WORKDIR /app
+ENTRYPOINT ["./entrypoint.sh"]

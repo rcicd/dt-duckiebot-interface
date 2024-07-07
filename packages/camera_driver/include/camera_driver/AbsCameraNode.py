@@ -64,8 +64,11 @@ class AbsCameraNode(ABC, Node):
         self._framerate = self.get_parameter("framerate")
         self.declare_parameter("exposure_mode", "sports")
         self._exposure_mode = self.get_parameter("exposure_mode")
+        self.declare_parameter("allow_partial_fov", False)
+        self.declare_parameter("use_hw_acceleration", False)
 
-        # define parameters
+
+    # define parameters
         # self._framerate.register_update_callback(self.parameters_updated)
         # self._res_w.register_update_callback(self.parameters_updated)
         # self._res_h.register_update_callback(self.parameters_updated)
