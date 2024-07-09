@@ -86,4 +86,4 @@ It should not contain any high-level functionality.
 
 ### How to launch manually
 
-```$ docker run --privileged -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket -v /tmp/argus_socket:/tmp/argus_socket -v /data:/data --network=host --runtime nvidia -v /tmp/.X11-unix/:/tmp/.X11-unix --name duckiebot-ros2-interface -dit --restart unless-stopped spgc/duckietown_autonomous_driving:ros2-interface```
+```$ docker run --privileged -v /dev/shm:/dev/shm -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket -v /tmp/argus_socket:/tmp/argus_socket -v /data:/data --network=host --runtime nvidia -v /tmp/.X11-unix/:/tmp/.X11-unix --name duckiebot-ros2-interface -dit --restart unless-stopped spgc/duckietown_autonomous_driving:ros2-interface```
