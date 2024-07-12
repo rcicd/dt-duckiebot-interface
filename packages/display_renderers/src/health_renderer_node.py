@@ -2,11 +2,12 @@
 
 import os
 import rclpy
+from rclpy.node import Node
 import requests
 from typing import Union
 from duckietown_msgs.msg import DisplayFragment as DisplayFragmentMsg
 
-from PIL import Image, ImageOps
+import cv2
 
 from display_renderer.text import monospace_screen
 from display_renderer import (
@@ -20,17 +21,22 @@ from display_renderer import (
     PAGE_HOME,
 )
 
-from duckietown.dtros import DTROS, NodeType, TopicType
-from duckietown.utils.image.pil import pil_to_np
 
-
-class HealthDisplayRendererNode(DTROS):
+class HealthDisplayRendererNode(Node):
     def __init__(self):
-        super(HealthDisplayRendererNode, self).__init__("health_renderer_node")
+        super(HealthDisplayRendererNode, self).__init__(node_name="health_renderer_node")
         # get parameters
-        self._veh = self.declare_parameter("veh").get_parameter_value().string_value
-        self._assets_dir = self.declare_parameter("assets_dir").get_parameter_value().string_value
-        self._frequency = self.declare_parameter("frequency").get_parameter_value().double_value
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('veh', ""),
+                ('assets_dir', ""),
+                ('frequency', 1.0)
+            ]
+        )
+        self._veh = self.get_parameter("veh").get_parameter_value().string_value
+        self._assets_dir = self.get_parameter("assets_dir").get_parameter_value().string_value
+        self._frequency = self.get_parameter("frequency").get_parameter_value().double_value
         # create publisher
         self._pub = self.create_publisher(
             DisplayFragmentMsg,
@@ -41,6 +47,7 @@ class HealthDisplayRendererNode(DTROS):
         self._battery_indicator = BatteryIndicatorFragmentRenderer(self._assets_dir)
         self._usage_renderer = UsageStatsFragmentRenderer()
         self._renderers = [self._battery_indicator, self._usage_renderer]
+        self._port = os.getenv("HEALTH_PORT", 8085)
         # create loop
         self._timer = self.create_timer(1.0 / self._frequency, self._beat)
 
@@ -49,7 +56,7 @@ class HealthDisplayRendererNode(DTROS):
         self._publish()
 
     def _fetch(self):
-        health_api_url = f"http://{self._veh}.local/health/"
+        health_api_url = f"http://{self._veh}.local:{self._port}/"
         # noinspection PyBroadException
         try:
             health_data = requests.get(health_api_url).json()
@@ -89,7 +96,8 @@ class BatteryIndicatorFragmentRenderer(AbsDisplayFragmentRenderer):
         # load assets
         _asset_path = lambda a: os.path.join(self._assets_dir, "icons", f"{a}.png")
         self._assets = {
-            asset: pil_to_np(ImageOps.grayscale(Image.open(_asset_path(asset))))
+            # asset: pil_to_np(ImageOps.grayscale(Image.open(_asset_path(asset))))
+            asset: cv2.imread(_asset_path(asset), cv2.IMREAD_GRAYSCALE)
             for asset in [
                 "battery_not_found",
                 "battery_charging",

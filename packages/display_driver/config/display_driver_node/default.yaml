@@ -1,3 +1,5 @@
-bus: 1
-address: 0x3C
-frequency: 1
+display_driver_node:
+  ros__parameters:
+    bus: 1
+    address: 0x3C
+    frequency: 1

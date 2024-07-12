@@ -9,3 +9,4 @@ docs/build
 
 *.DS_Store
 ros2-interface
+ros2-display

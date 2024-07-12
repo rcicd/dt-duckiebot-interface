@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import os
+
 import rclpy
 from rclpy.node import Node
 import requests
@@ -15,7 +17,6 @@ from display_renderer import (
     TextFragmentRenderer,
 )
 
-from duckietown.dtros import DTROS, NodeType, TopicType
 
 class RobotInfoRendererNode(Node):
     def __init__(self):
@@ -28,11 +29,12 @@ class RobotInfoRendererNode(Node):
             "fragments",
             1
         )
+        self._port = os.getenv("HEALTH_PORT", 8085)
         # create renderers
         renderer = RobotInfoRenderer()
 
         # fetch info from Duckiebot health-API
-        health_api_url = f"http://{self._veh}.local/health/"
+        health_api_url = f"http://{self._veh}.local:{self._port}/"
         # just need to get data from health API once
         health_data = None
         while rclpy.ok():
@@ -41,7 +43,9 @@ class RobotInfoRendererNode(Node):
                 break
             except BaseException:
                 # wait for health API to become available
-                rclpy.sleep(5)
+                rate = self.create_rate(5)
+                rate.sleep()
+                rate.destroy()
                 continue
         self.get_logger().info("Health API data fetch successful.")
 

@@ -17,7 +17,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/images/icons', glob('/images/icons/*.png')),
+        ('share/' + package_name + '/images/icons', glob('images/icons/*.png')),
         ('share/' + package_name + '/urdf', glob('urdf/*.xacro')),
         ('share/' + package_name + '/launch', glob('launch/*.launch')),
     ] + [map_recursive_files('share/' + package_name, 'include/' + x) for x in os.listdir('include')]

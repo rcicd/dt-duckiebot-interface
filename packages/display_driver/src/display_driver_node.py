@@ -5,9 +5,12 @@ import rclpy
 from rclpy.node import Node
 import numpy as np
 
+import time
+
 from PIL import Image
 from typing import Any, Iterable
 from threading import Semaphore
+import cv_bridge
 
 from luma.core.interface.serial import i2c
 from luma.oled.device import ssd1306
@@ -31,9 +34,6 @@ from display_renderer import (
     DisplayFragment,
 )
 
-from duckietown.utils.image.pil import np_to_pil, pil_to_np
-from duckietown.utils.image.ros import imgmsg_to_mono8
-
 from hardware_test_oled_display import HardwareTestOledDisplay
 
 
@@ -49,10 +49,15 @@ class DisplayNode(Node):
     def __init__(self):
         super(DisplayNode, self).__init__(node_name="display_driver_node")
         # get parameters
+        self.declare_parameter('veh', 'example_robot')
         self._veh = self.get_parameter("veh").get_parameter_value().string_value
-        self._i2c_bus = self.get_parameter("bus", 1).get_parameter_value().integer_value
-        self._i2c_address = self.get_parameter("address", 0x3C).get_parameter_value().integer_value
-        self._frequency = self.get_parameter("frequency", 1).get_parameter_value().integer_value
+        self.declare_parameter('bus', 1)
+        self._i2c_bus = self.get_parameter("bus").get_parameter_value().integer_value
+        self.declare_parameter('address', 0x3C)
+        self._i2c_address = self.get_parameter("address").get_parameter_value().integer_value
+        self.declare_parameter('frequency', 1)
+        self._frequency = self.get_parameter("frequency").get_parameter_value().integer_value
+
         # create a display handler
         serial = i2c(port=self._i2c_bus, address=self._i2c_address)
         self._display = ssd1306(serial)
@@ -141,7 +146,8 @@ class DisplayNode(Node):
 
         region = self._REGIONS[msg.region]
         # convert image to greyscale
-        img = imgmsg_to_mono8(msg.data)
+        # img = imgmsg_to_mono8(msg.data)
+        img = cv_bridge.CvBridge().imgmsg_to_cv2(msg.data, desired_encoding="mono8")
         # parse ROI
         roi = DisplayROI.from_sensor_msgs_ROI(msg.location)
         if roi is None:
@@ -151,9 +157,9 @@ class DisplayNode(Node):
             fh, fw = img.shape
             # does it fit?
             if fw > rw or fh > rh:
-                img = np_to_pil(img, mode="L")
+                img = Image.fromarray(img)
                 img = img.resize((rw, rh), resample=Image.NEAREST)
-                img = pil_to_np(img)
+                img = np.array(img)
                 fh, fw = rh, rw
             roi = DisplayROI(x=0, y=0, w=fw, h=fh)
         else:
@@ -165,9 +171,9 @@ class DisplayNode(Node):
             cw, ch = min(region.width - fx, roi.w), min(region.height - fy, roi.h)
             # does it fit?
             if fw > cw or fh > ch:
-                img = np_to_pil(img, mode="L")
+                img = Image.fromarray(img)
                 img = img.resize((cw, ch), resample=Image.NEAREST)
-                img = pil_to_np(img)
+                img = np.array(img)
                 fh, fw = ch, cw
             # update ROI
             roi = DisplayROI(x=fx, y=fy, w=fw, h=fh)
@@ -180,15 +186,15 @@ class DisplayNode(Node):
                 data=img, roi=roi, page=msg.page, z=msg.z, _ttl=msg.ttl, _time=self.get_clock().now().to_msg()
             )
         # force refresh if this fragment is on the current page
-        if msg.page == self._page:
+        if msg.page == self._page or msg.page == ALL_PAGES:
             self._render(None)
 
-    def _render(self, _):
+    def _render(self, _=None):
         # use a reminder object to control the maximum frequency
         if not self._reminder.is_time():
             return
         # make sure we are not shutdown
-        if self.is_shutdown:
+        if not rclpy.ok():
             return
         # ---
         with self._fragments_lock:
@@ -250,14 +256,15 @@ class DisplayNode(Node):
                 pass
 
     def on_shutdown(self):
-        self.loginfo("Clearing buffer...")
+        self.get_logger().info("Clearing buffer...")
         # stop rendering job
-        self._timer.shutdown()
+        self._timer.cancel()
+        self._timer.destroy()
         # clear buffer
         self._buffer.fill(0)
         # render nothing
         buf = Image.fromarray(self._buffer, mode="1")
-        self.loginfo("Clearing display...")
+        self.get_logger().info("Clearing display...")
         with self._device_lock:
             try:
                 self._display.display(buf)
@@ -297,7 +304,8 @@ class PagerFragmentRenderer(AbsDisplayFragmentRenderer):
             page=self._page,
             z=self._z,
             _ttl=self._ttl,
-            _time = self.get_clock().now().nanoseconds / 1e9
+            # _time=self.get_clock().now().nanoseconds / 1e9
+            _time=time.time_ns() / 1e9,
         )
 
     def update(self, pages: Iterable[int], page: int):

@@ -2,23 +2,29 @@
 
 import os
 import rclpy
+from rclpy.node import Node
 import netifaces
-from PIL import Image, ImageOps
+import cv2
 from duckietown_msgs.msg import DisplayFragment as DisplayFragmentMsg
 
 from display_renderer import REGION_HEADER, DisplayROI, AbsDisplayFragmentRenderer, Z_SYSTEM, ALL_PAGES
 
-from duckietown.dtros import DTROS, NodeType, TopicType
-from duckietown.utils.image.pil import pil_to_np
 
-
-class NetworkingDisplayRendererNode(DTROS):
+class NetworkingDisplayRendererNode(Node):
     def __init__(self):
         super(NetworkingDisplayRendererNode, self).__init__("networking_renderer_node")
         # get parameters
-        self._veh = self.declare_parameter("veh").get_parameter_value().string_value
-        self._assets_dir = self.declare_parameter("assets_dir").get_parameter_value().string_value
-        self._frequency = self.declare_parameter("frequency").get_parameter_value().double_value
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('veh', ""),
+                ('assets_dir', ""),
+                ('frequency', 0.25)
+            ]
+        )
+        self._veh = self.get_parameter("veh").get_parameter_value().string_value
+        self._assets_dir = self.get_parameter("assets_dir").get_parameter_value().string_value
+        self._frequency = self.get_parameter("frequency").get_parameter_value().double_value
         # create publisher
         self._pub = self.create_publisher(
             DisplayFragmentMsg,
@@ -48,7 +54,7 @@ class NetIFaceFragmentRenderer(AbsDisplayFragmentRenderer):
         # load assets
         _asset_path = lambda a: os.path.join(self._assets_dir, "icons", f"{a}.png")
         self._assets = {
-            asset: pil_to_np(ImageOps.grayscale(Image.open(_asset_path(asset))))
+            asset: cv2.imread(_asset_path(asset), cv2.IMREAD_GRAYSCALE)
             for asset in [f"{self._iface}_connected", f"{self._iface}_not_connected"]
         }
 
@@ -60,7 +66,7 @@ class NetIFaceFragmentRenderer(AbsDisplayFragmentRenderer):
         except ValueError:
             connected = False
         icon = self._iface + ("" if connected else "_not") + "_connected"
-        self._buffer[:, :] = self._assets[icon]
+        self._buffer[:, :] = self._assets.get(icon)
 
 
 def main(args=None):

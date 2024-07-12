@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 from glob import glob
 import os
 from utils.utils import map_recursive_files
@@ -9,7 +9,7 @@ packages = ['health_renderer_node', 'networking_renderer_node', 'robot_info_rend
 setup(
     name=package_name,
     version='1.0.0',
-    packages=[''],
+    packages=find_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),

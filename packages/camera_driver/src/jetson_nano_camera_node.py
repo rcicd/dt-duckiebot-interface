@@ -240,25 +240,3 @@ if __name__ == "__main__":
     # keep the node alive
     rclpy.spin(camera_node)
     rclpy.shutdown()
-
-
-# """ \
-#                 nvarguscamerasrc sensor-id=0\
-#                 sensor-mode={} exposuretimerange="100000 80000000" ! \
-#                 video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! \
-#                 nvvidconv !
-#                 video/x-raw, format=BGRx !
-#                 videoconvert ! \
-#                 appsink max-buffers=1 drop=True\
-#             """.format(
-#     3, 640, 480, 30
-# )
-#
-# "nvarguscamerasrc sensor-id=%d ! "
-# "video/x-raw(memory:NVMM), "
-# "width=(int)%d, height=(int)%d, "
-# "format=(string)NV12, framerate=(fraction)%d/1 ! "
-# "nvvidconv flip-method=%d ! "
-# "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
-# "videoconvert ! "
-# "video/x-raw, format=(string)BGR ! appsink max-buffers=1 drop=True"

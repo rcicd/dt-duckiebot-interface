@@ -30,6 +30,7 @@ set(msg_files
   "msg/AprilTagsWithInfos.msg"
   "msg/BoolStamped.msg"
   "msg/BoolStampedETHZ17.msg"
+  "msg/ButtonEvent.msg"
   "msg/CarControl.msg"
   "msg/CoordinationClearance.msg"
   "msg/CoordinationClearanceETHZ17.msg"

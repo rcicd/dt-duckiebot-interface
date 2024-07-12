@@ -84,23 +84,23 @@
 <!--     </group> -->
 
 <!-- OLED Display driver: -->
-<!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--         <include file="$(find-pkg-share display_driver)/launch/display_driver_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--     </group> -->
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <include file="$(find-pkg-share display_driver)/launch/display_driver_node.launch"/>
+        <unset_env name="VEH"/>
+    </group>
 
 <!-- Display renderers: -->
-<!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--          --><!-- health: renders health and usage info about the robot -->
-<!--         <include file="$(find-pkg-share display_renderers)/launch/health_renderer_node.launch"/> -->
-<!--          --><!-- networking: renders connectivity status -->
-<!--         <include file="$(find-pkg-share display_renderers)/launch/networking_renderer_node.launch"/> -->
-<!--          --><!-- robot_info: renders robot hostname, model and software firmware -->
-<!--         <include file="$(find-pkg-share display_renderers)/launch/robot_info_renderer_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--     </group> -->
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
+        <set_env name="VEH" value="$(var veh)"/>
+<!--         health: renders health and usage info about the robot -->
+        <include file="$(find-pkg-share display_renderers)/launch/health_renderer_node.launch"/>
+<!--         networking: renders connectivity status -->
+        <include file="$(find-pkg-share display_renderers)/launch/networking_renderer_node.launch"/>
+<!--         robot_info: renders robot hostname, model and software firmware -->
+        <include file="$(find-pkg-share display_renderers)/launch/robot_info_renderer_node.launch"/>
+        <unset_env name="VEH"/>
+    </group>
 
 <!-- Button driver -->
 <!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')"> -->

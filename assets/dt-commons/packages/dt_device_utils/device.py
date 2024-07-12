@@ -59,7 +59,8 @@ def get_device_hardware_brand() -> DeviceHardwareBrand:
 
 def _device_trigger(trigger: str, quiet: bool = True) -> bool:
     hostname = get_device_hostname()
-    url = f"http://{hostname}.local/health/trigger/{trigger}"
+    port = os.getenv("HEALTH_PORT", 8085)
+    url = f"http://{hostname}.local:{port}/trigger/{trigger}"
     # ---
     try:
         data = requests.get(url).json()

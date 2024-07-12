@@ -22,5 +22,5 @@ class DisplayFragment:
         if self._ttl < 0:
             # infinite ttl
             return 1
-        elapsed = time.time() - self._time
+        elapsed = time.time() - self._time.sec
         return self._ttl - elapsed

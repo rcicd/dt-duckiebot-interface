@@ -1,8 +1,13 @@
 import abc
+import time
+
 import rclpy
 import numpy as np
 
 from typing import Union, Iterable
+from cv_bridge import CvBridge
+
+from builtin_interfaces.msg import Time
 
 from duckietown_msgs.msg import DisplayFragment as DisplayFragmentMsg
 from sensor_msgs.msg import RegionOfInterest
@@ -49,12 +54,13 @@ class AbsDisplayFragmentRenderer(abc.ABC):
 
     def as_msg(self):
         self._render()
+        # stamp = rclpy.Ti
         return DisplayFragmentMsg(
-            header=Header(stamp=self.get_clock().now().to_msg()),
+            header=Header(stamp=rclpy.time.Time().to_msg()),
             id=self._name,
             region=self._region.id,
             page=self._page,
-            data=mono1_to_imgmsg(self._buffer),
+            data=CvBridge().cv2_to_imgmsg(self._buffer, encoding="mono8"),
             location=RegionOfInterest(
                 x_offset=self._roi.x, y_offset=self._roi.y, width=self._roi.w, height=self._roi.h
             ),

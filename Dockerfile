@@ -57,6 +57,9 @@ RUN colcon mixin add default \
       https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml && \
     colcon metadata update
 
+# Port for bot health status
+ENV HEALTH_PORT 8085
+
 # Nadia's
 ENV SOURCE_DIR /app/duckiebot_interface
 RUN apt update && apt-get update
@@ -79,6 +82,10 @@ COPY ./assets/etc/ld.so.conf.d/nvidia-tegra.conf /etc/ld.so.conf.d/nvidia-tegra.
 COPY ./assets/usr/share/fonts/*.ttf /usr/share/fonts/
 COPY ./scripts /app/
 WORKDIR /app
+
+COPY ./10-default.list /etc/ros/rosdep/sources.list.d/10-default.list
+
+RUN rosdep update --rosdistro $ROS_DISTRO
 
 RUN apt-get -y update && apt-get -q install -y udev
 RUN apt-get -y update && apt-get -q install -y ros-iron-tf2-ros ros-iron-joy
