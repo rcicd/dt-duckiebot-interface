@@ -43,7 +43,7 @@ class RobotInfoRendererNode(Node):
                 break
             except BaseException:
                 # wait for health API to become available
-                rate = self.create_rate(5)
+                rate = self.create_rate(0.2)
                 rate.sleep()
                 rate.destroy()
                 continue

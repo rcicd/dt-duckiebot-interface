@@ -9,8 +9,6 @@ from duckietown_msgs.msg import (
     DisplayFragment,
 )
 
-from duckietown.dtros import NodeType, TopicType
-
 from button_driver import ButtonEvent, ButtonDriver
 from hardware_test_button import HardwareTestButton
 
@@ -118,11 +116,12 @@ class ButtonDriverNode(Node):
         _display_pub.publish(_renderer.as_msg())
         n_times_to_try = 3
         # try several times to go to page
+        rate = self.create_rate(n_times_to_try)
         for _ in range(n_times_to_try):
             # emulate button event to switch to shutdown page
             self._publish(ButtonEventMsg.EVENT_HELD_3SEC)
-            rclpy.sleep(1.0 / n_times_to_try)
-
+            rate.sleep()
+        rate.destroy()
         # turn off LEDs
         _led_pub = self.create_publisher(
             LEDPattern,
@@ -136,10 +135,11 @@ class ButtonDriverNode(Node):
 
         # blink top power button as a confirmation, too
         self._button.led.confirm_shutdown()
+        rate = self.create_rate(1)
+        rate.sleep()
+        rate.destroy()
 
-        rclpy.sleep(1)
-
-    def _srv_cb_shutdown_behavior(self, _):
+    def _srv_cb_shutdown_behavior(self, request, response):
         # for external methods of shutting down (e.g. from dts or the Dashboard)
         try:
             self._show_shutdown_behavior()
@@ -167,8 +167,6 @@ class BatteryShutdownConfirmationRenderer(MonoImageFragmentRenderer):
 
         contents = monospace_screen((self.roi.h, self.roi.w), "Shutting down", scale="hfill", align="center")
         self.data[:, :] = contents
-
-
 
 
 if __name__ == "__main__":

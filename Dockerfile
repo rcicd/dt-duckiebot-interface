@@ -60,6 +60,18 @@ RUN colcon mixin add default \
 # Port for bot health status
 ENV HEALTH_PORT 8085
 
+RUN apt update && apt-get update
+RUN apt-get -q install -y bc build-essential bzip2 can-utils curl freeglut3-dev git gnupg2 i2c-tools lsb-release python3 python3-dev python3-pip software-properties-common tmux vim wget nano
+
+COPY ./10-default.list /etc/ros/rosdep/sources.list.d/10-default.list
+
+RUN rosdep update --rosdistro $ROS_DISTRO
+RUN apt update && apt-get update
+
+RUN apt-get -y update && apt-get -q install -y udev
+RUN apt-get -y update && apt-get -q install -y ros-iron-tf2-ros ros-iron-joy
+RUN pip3 -q install  flask Flask-Cors dt-vl53l0x==1.0.0 Jetson.GPIO==2.0.20 luma.oled==3.13.0 adafruit-circuitpython-mpu6050==1.2.4 colorir==2.0.1 Pillow==9.5.0 requests setuptools
+
 # Nadia's
 ENV SOURCE_DIR /app/duckiebot_interface
 RUN apt update && apt-get update
@@ -70,8 +82,8 @@ ENV ROBOT_CONFIGURATION DB21M
 ENV VEHICLE_NAME example_robot
 ENV PROJECT_NAME example_project
 ENV DEFAULT_LAUNCH /app/duckiebot_interface/launchers/default.sh
+ENV ROS_DOMAIN_ID 0
 ENV PARALLEL_WORKERS 4
-RUN apt-get -q install -y bc build-essential bzip2 can-utils curl freeglut3-dev git gnupg2 i2c-tools lsb-release python3 python3-dev python3-pip software-properties-common tmux vim wget nano
 COPY assets/dt-commons/packages /app/duckiebot_interface/dt-common/packages
 COPY assets/dt-commons/assets/bin /usr/local/bin/
 COPY assets/dt-commons/assets/entrypoint.sh /entrypoint.sh
@@ -83,13 +95,13 @@ COPY ./assets/usr/share/fonts/*.ttf /usr/share/fonts/
 COPY ./scripts /app/
 WORKDIR /app
 
-COPY ./10-default.list /etc/ros/rosdep/sources.list.d/10-default.list
+#RUN cat /etc/ros/rosdep/sources.list.d/10-default.list
 
-RUN rosdep update --rosdistro $ROS_DISTRO
-
-RUN apt-get -y update && apt-get -q install -y udev
-RUN apt-get -y update && apt-get -q install -y ros-iron-tf2-ros ros-iron-joy
-RUN pip3 -q install  flask Flask-Cors dt-vl53l0x==1.0.0 Jetson.GPIO==2.0.20 luma.oled==3.13.0 adafruit-circuitpython-mpu6050==1.2.4 colorir==2.0.1 Pillow==9.5.0 requests setuptools
+#RUN apt-cache policy | grep universe
+#
+#RUN apt-get update
+#
+#RUN apt install -y ros-iron-ros2-control ros-iron-ros2-controllers ros-iron-controller-manager
 
 RUN rosdep install -q -y -i --from-path . --rosdistro iron -r --skip-keys="gazebo_ros gazebo_ros2_control"
 
