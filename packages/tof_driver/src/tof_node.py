@@ -26,7 +26,7 @@ class ToFNode(Node):
     def __init__(self):
         super(ToFNode, self).__init__("tof_node")
         self.declare_parameter("veh", "")
-        self.declare_parameter("connectors","")
+        self.declare_parameter("connectors", "")
         self.declare_parameter("sensor_name", "")
         self.declare_parameter("frequency", 10)
         self.declare_parameter("mode", "BETTER")
@@ -87,7 +87,7 @@ class ToFNode(Node):
     def _find_sensor(self) -> Optional[VL53L0X]:
         for connector in self._i2c_connectors:
             conn: str = "[bus:{bus}](0x{address:02X})".format(**connector)
-            self.get_logger().info(f"Trying to open device on connector {conn}: connector[\"bus\"]={connector["bus"]} and connector[\"address\"]={connector["address"]}")
+            self.get_logger().info(f"Trying to open device on connector {conn}: connector[\"bus\"]={connector['bus']} and connector[\"address\"]={connector['address']}")
             sensor = VL53L0X(i2c_bus=connector["bus"], i2c_address=connector["address"])
             try:
                 self.get_logger().info(f"Opening sensor")
