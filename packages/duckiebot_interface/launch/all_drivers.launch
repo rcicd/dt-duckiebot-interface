@@ -16,15 +16,15 @@
           name="robot_state_publisher"/>
 
 <!--     Camera Node: reads frames from a physical camera and produces ROS messages -->
-<!--     <group unless="$(var camera_disabled)"> -->
-<!--         <group if="$(eval '\'$(var robot_type)\' in [\'duckiebot\', \'watchtower\', \'traffic_light\', \'duckiedrone\']')"> -->
-<!--             <set_env name="VEH" value="$(var veh)"/> -->
-<!--             <set_env name="PARAM_FILE_NAME" value="$(var robot_type)"/> -->
-<!--             <include file="$(find-pkg-share camera_driver)/launch/camera_node.launch"/> -->
-<!--             <unset_env name="VEH"/> -->
-<!--             <unset_env name="PARAM_FILE_NAME"/> -->
-<!--         </group> -->
-<!--     </group> -->
+    <group unless="$(var camera_disabled)">
+        <group if="$(eval '\'$(var robot_type)\' in [\'duckiebot\', \'watchtower\', \'traffic_light\', \'duckiedrone\']')">
+            <set_env name="VEH" value="$(var veh)"/>
+            <set_env name="PARAM_FILE_NAME" value="$(var robot_type)"/>
+            <include file="$(find-pkg-share camera_driver)/launch/camera_node.launch"/>
+            <unset_env name="VEH"/>
+            <unset_env name="PARAM_FILE_NAME"/>
+        </group>
+    </group>
 
 <!--  i2c used -->
 <!-- LED Driver: reads ROS messages and commands the LEDs -->
@@ -38,23 +38,16 @@
 
 <!--  i2c used -->
 <!--     Joystick: reads from a physical joystick and produces ROS messages -->
-<!--     <group if="$(eval '\'$(var robot_type)\' == \'duckiebot\'')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--         <set_env name="PARAM_FILE_NAME" value="$(var param_file_name)"/> -->
-<!--         <include file="$(find-pkg-share joystick)/launch/joystick_node.launch"/> -->
+    <group if="$(eval '\'$(var robot_type)\' == \'duckiebot\'')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <set_env name="PARAM_FILE_NAME" value="$(var param_file_name)"/>
+        <include file="$(find-pkg-share joystick)/launch/joystick_node.launch"/>
 
 <!-- Wheel Drivers: reads ROS messages and spins the motors -->
-<!--         <include file="$(find-pkg-share wheels_driver)/launch/wheels_driver_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--         <unset_env name="PARAM_FILE_NAME"/> -->
-<!--     </group> -->
-
-<!-- Traffic Light (Traffic Light robot only): commands the LEDs of a traffic light -->
-<!--     <group if="$(eval '\'$(var robot_type)\' == \'traffic_light\'')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--         <include file="$(find-pkg-share traffic_light)/launch/traffic_light_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--     </group> -->
+        <include file="$(find-pkg-share wheels_driver)/launch/wheels_driver_node.launch"/>
+        <unset_env name="VEH"/>
+        <unset_env name="PARAM_FILE_NAME"/>
+    </group>
 
 <!--  .gpio used -->
 <!--     Wheel Encoders (DB19 and above robot only): reads data from wheel encoders -->
@@ -84,23 +77,23 @@
 <!--     </group> -->
 
 <!-- OLED Display driver: -->
-<!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--         <include file="$(find-pkg-share display_driver)/launch/display_driver_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--     </group> -->
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <include file="$(find-pkg-share display_driver)/launch/display_driver_node.launch"/>
+        <unset_env name="VEH"/>
+    </group>
 
 <!-- Display renderers: -->
-<!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
+        <set_env name="VEH" value="$(var veh)"/>
 <!--         health: renders health and usage info about the robot -->
-<!--         <include file="$(find-pkg-share display_renderers)/launch/health_renderer_node.launch"/> -->
+        <include file="$(find-pkg-share display_renderers)/launch/health_renderer_node.launch"/>
 <!--         networking: renders connectivity status -->
-<!--         <include file="$(find-pkg-share display_renderers)/launch/networking_renderer_node.launch"/> -->
+        <include file="$(find-pkg-share display_renderers)/launch/networking_renderer_node.launch"/>
 <!--         robot_info: renders robot hostname, model and software firmware -->
-<!--         <include file="$(find-pkg-share display_renderers)/launch/robot_info_renderer_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--     </group> -->
+        <include file="$(find-pkg-share display_renderers)/launch/robot_info_renderer_node.launch"/>
+        <unset_env name="VEH"/>
+    </group>
 
 <!-- Button driver -->
     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\', \'DBR4\']')">
@@ -116,15 +109,5 @@
 <!--         <unset_env name="VEH"/> -->
 <!--     </group> -->
 
-<!-- Robot HTTP API: provides an HTTP API through which we can control the Robot -->
-<!--     <group if="$(eval '\'$(var robot_type)\' not in [\'workstation\']')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--         <set_env name="ROBOT_TYPE" value="$(var robot_type)"/> -->
-<!--         <set_env name="PARAM_FILE_NAME" value="$(var param_file_name)"/> -->
-<!--         <include file="$(find-pkg-share robot_http_api)/launch/robot_http_api_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--         <unset_env name="ROBOT_TYPE"/> -->
-<!--         <unset_env name="PARAM_FILE_NAME"/> -->
-<!--     </group> -->
 
 </launch>
