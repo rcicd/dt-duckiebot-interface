@@ -1,0 +1,16 @@
+<launch>
+    <arg name="veh"/>
+    <arg name="name"/>
+    <let name="param_file_name" value="front_center"/>
+
+    <node
+        namespace="$(var veh)"
+        pkg="tof_driver"
+        exec="tof_node.py"
+        name="tof_driver_node"
+        output="screen"
+    >
+    <param name="veh" value="$(var veh)" />
+    <param from="$(find-pkg-share tof_driver)/config/tof_node/$(var param_file_name).yaml"/>
+    </node>
+</launch>

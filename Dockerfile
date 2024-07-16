@@ -1,4 +1,4 @@
-FROM spgc/duckietown_autonomous_driving:ros2-interface
+FROM spgc/duckietown_autonomous_driving:ros2-interface-button
 #FROM nvcr.io/nvidia/l4t-base:r36.2.0
 SHELL ["/bin/bash", "-c"]
 
@@ -75,7 +75,7 @@ SHELL ["/bin/bash", "-c"]
 
 # Nadia's
 ENV SOURCE_DIR /app/duckiebot_interface
-RUN #apt update && apt-get update
+#RUN apt update && apt-get update
 ENV SOURCE_REPO duckiebot_interface
 ENV ROBOT_TYPE duckiebot
 ENV ROS2_SOURCE /opt/ros/iron/setup.sh
@@ -95,6 +95,7 @@ COPY ./packages /app/duckiebot_interface/packages
 COPY ./assets/etc/ld.so.conf.d/nvidia-tegra.conf /etc/ld.so.conf.d/nvidia-tegra.conf
 COPY ./assets/usr/share/fonts/*.ttf /usr/share/fonts/
 COPY ./scripts /app/
+COPY ./assets/dt_vl53l0x-0.0.1-py3-none-manylinux2014_aarch64.whl /app/
 WORKDIR /app
 
 #RUN cat /etc/ros/rosdep/sources.list.d/10-default.list
@@ -109,8 +110,11 @@ WORKDIR /app
 ##RUN apt install -y ros-iron-ros2-control ros-iron-ros2-controllers ros-iron-controller-manager
 #
 #RUN apt-get update && apt update && rosdep install -q -y -i --from-path . --rosdistro iron -r --skip-keys="gazebo_ros gazebo_ros2_control"
-
 WORKDIR /app/.
+RUN rm -rf ./install
+RUN rm -rf ./build
+RUN pip uninstall dt_vl53l0x -y && pip install dt_vl53l0x-0.0.1-py3-none-manylinux2014_aarch64.whl
+RUN apt install -y ros-iron-sensor-msgs
 RUN source ${ROS2_SOURCE} && colcon build --parallel-workers ${PARALLEL_WORKERS}
 WORKDIR /app
 ENTRYPOINT ["./entrypoint.sh"]

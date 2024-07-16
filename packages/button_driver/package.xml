@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-    <name>tof_driver</name>
+    <name>button_driver</name>
     <version>1.0.0</version>
-    <description>An interface to the ToF sensor</description>
+    <description>An interface to the display sensor</description>
 
     <author email="afdaniele@ttic.edu">Andrea F. Daniele</author>
     <maintainer email="afdaniele@ttic.edu">Andrea F. Daniele</maintainer>
@@ -13,11 +13,10 @@
         <build_type>ament_python</build_type>
     </export>
 
-<!--    <depend>setuptools</depend>-->
     <depend>rclpy</depend>
+    <depend>utils_package</depend>
     <depend>duckietown_msgs</depend>
     <depend>sensor_msgs</depend>
-    <depend>dt_class_utils</depend>
     <depend>std_msgs</depend>
-    <depend>utils_package</depend>
+
 </package>

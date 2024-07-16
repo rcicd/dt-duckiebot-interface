@@ -10,6 +10,7 @@ from rclpy.node import Node
 from dt_class_utils import DTReminder
 from sensor_msgs.msg import Range
 from std_msgs.msg import Header
+from duckietown_msgs.msg import DisplayFragment as DisplayFragmentMsg
 
 from tof_accuracy import ToFAccuracy
 from hardware_test_tof import HardwareTestToF
@@ -19,6 +20,8 @@ from display_renderer import (
     PAGE_TOF,
     REGION_BODY,
     MonoImageFragmentRenderer,
+    monospace_screen,
+    DisplayFragment
 )
 
 
@@ -40,14 +43,14 @@ class ToFNode(Node):
         self._mode = self.get_parameter("mode").get_parameter_value().string_value
         self._display_fragment_frequency = self.get_parameter("display_fragment_frequency").get_parameter_value().integer_value
         self._accuracy = ToFAccuracy.from_string(self._mode)
-        print(f"veh: {self._veh}",
-              f"connectors: {self._i2c_connectors}",
-              f"sensor_name: {self._sensor_name}",
-              f"frequency: {self._frequency}",
-              f"mode: {self._mode}",
-              f"display_fragment_frequency: {self._display_fragment_frequency}",
-              f"accuracy: {self._accuracy}",
-              sep="\n")
+        self.get_logger().info(f"veh: {self._veh}\n"
+                               f"connectors: {self._i2c_connectors}\n"
+                               f"sensor_name: {self._sensor_name}\n"
+                               f"frequency: {self._frequency}\n"
+                               f"mode: {self._mode}\n"
+                               f"display_fragment_frequency: {self._display_fragment_frequency}\n"
+                               f"accuracy: {self._accuracy}\n"
+                               )
         # create a VL53L0X sensor handler
         self._sensor: Optional[VL53L0X] = self._find_sensor()
         if not self._sensor:
@@ -55,14 +58,14 @@ class ToFNode(Node):
             self.get_logger().error(f"No VL53L0X device found. These connectors were tested:\n{conns}\n")
             exit(1)
         # create publisher
+        self._display_pub = self.create_publisher(
+            DisplayFragmentMsg,
+            "fragments",
+            1
+        )
         self._pub = self.create_publisher(
             Range,
             "range",
-            1
-        )
-        self._display_pub = self.create_publisher(
-            DisplayFragment,
-            "fragments",
             1
         )
         # user hardware test

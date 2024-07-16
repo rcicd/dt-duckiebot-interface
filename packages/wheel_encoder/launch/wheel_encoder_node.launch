@@ -1,0 +1,25 @@
+<launch>
+    <arg name="veh"/>
+    <arg name="wheel"/>
+    <arg name="node_name"/>
+    <arg name="param_file_name"/>
+
+<!--     value="$(env VEH '')"/> -->
+<!--     value="default"/> -->
+<!--     value="wheels_encoder_node"/> -->
+<!--     value="$(env PARAM_FILE_NAME 'default')"/> -->
+
+    <node
+        namespace="$(var veh)"
+        pkg="wheel_encoder"
+        exec="wheel_encoder_node.py"
+        name="$(var node_name)"
+        output="screen"
+    >
+    <param name="veh" value="$(var veh)" />
+    <param name="name" value="$(var node_name)"/>
+    <param from="$(find-pkg-share wheel_encoder)/config/wheel_encoder_node/$(var param_file_name).yaml"/>
+    </node>
+
+
+</launch>
