@@ -28,13 +28,13 @@
 
 <!--  i2c used -->
 <!-- LED Driver: reads ROS messages and commands the LEDs -->
-<!--     <group if="$(eval '\'$(var robot_type)\' in [\'duckiebot\', \'traffic_light\']')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--         <set_env name="PARAM_FILE_NAME" value="default"/> -->
-<!--         <include file="$(find-pkg-share led_driver)/launch/led_driver_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--         <unset_env name="PARAM_FILE_NAME"/> -->
-<!--     </group> -->
+    <group if="$(eval '\'$(var robot_type)\' in [\'duckiebot\', \'traffic_light\']')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <set_env name="PARAM_FILE_NAME" value="default"/>
+        <include file="$(find-pkg-share led_driver)/launch/led_driver_node.launch"/>
+        <unset_env name="VEH"/>
+        <unset_env name="PARAM_FILE_NAME"/>
+    </group>
 
 <!--  i2c used -->
 <!--     Joystick: reads from a physical joystick and produces ROS messages -->
@@ -104,11 +104,11 @@
     </group>
 
 <!-- IMU sensor: -->
-<!--     <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21M\', \'DB21J\']')"> -->
-<!--         <set_env name="VEH" value="$(var veh)"/> -->
-<!--         <include file="$(find-pkg-share imu_driver)/launch/imu_node.launch"/> -->
-<!--         <unset_env name="VEH"/> -->
-<!--     </group> -->
+    <group if="$(eval '\'$(var robot_configuration)\' in [\'DB21J\', \'DB21M\']')">
+        <set_env name="VEH" value="$(var veh)"/>
+        <include file="$(find-pkg-share imu_driver)/launch/imu_node.launch"/>
+        <unset_env name="VEH"/>
+    </group>
 
 
 </launch>

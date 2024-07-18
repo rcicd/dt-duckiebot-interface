@@ -3,11 +3,9 @@ import time
 
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import ParameterType
 from duckietown_msgs.msg import LEDPattern
 from rgb_led import RGB_LED
-
-from hardware_test_led import HardwareTestLED
-from duckietown.dtros import NodeType
 
 
 class LEDDriverNode(Node):
@@ -42,12 +40,20 @@ class LEDDriverNode(Node):
             node_name=node_name
         )
         # load params
-        self._idle = self.get_parameter("idle").get_parameter_value().string_value
+        self.declare_parameter("idle.color", [""])
+        self.declare_parameter("idle.intensity", [0.0])
+        self.declare_parameter("power_off.color", [""] * 5)
+        _idle_color_string = self.get_parameter("idle.color").get_parameter_value().value
+        _power_off_color_string = self.get_parameter("power_off.color").get_parameter_value().value
+        self._idle_intensity = self.get_parameter("idle.intensity").get_parameter_value().value
+        self._power_off_intensity = self.get_parameter("power_off.intensity").get_parameter_value().value
+        self._idle_color = [[int(value) for value in color.split(" ")] for color in _idle_color_string]
+        self._power_off_color = [[int(value) for value in color.split(" ")] for color in _power_off_color_string]
         # initialize LED library
         self.led = RGB_LED()
         # turn OFF the LEDs
         for i in range(5):
-            self.led.set_RGB(i, self._idle["color"][i], self._idle["intensity"][i])
+            self.led.set_RGB(i, self._idle_color[i], self._idle_intensity[i])
         # subscribers
         self.sub_topic = self.create_subscription(
             LEDPattern,
@@ -56,15 +62,6 @@ class LEDDriverNode(Node):
             10
         )
 
-        # user hardware tests
-        self._hardware_test_front = HardwareTestLED(
-            self.led, info_str="front", led_ids=[0, 2, 4], idle_lighting=self._idle
-        )
-        self._hardware_test_back = HardwareTestLED(
-            self.led, info_str="back", led_ids=[1, 3], idle_lighting=self._idle
-        )
-
-        # ---
         self.get_logger().info("Initialized.")
 
     def led_cb(self, msg):
@@ -78,6 +75,8 @@ class LEDDriverNode(Node):
 
         At shutdown, changes the LED pattern to `LIGHT_OFF`.
         """
+        for i in range(5):
+            self.led.set_RGB(i, self._idle_color[i], self._idle_intensity[i])
         # Turn off the lights when the node dies
         self.get_logger().info("Shutting down. Turning LEDs off.")
         time.sleep(1)

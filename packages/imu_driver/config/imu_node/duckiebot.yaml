@@ -1,16 +1,13 @@
-# Sensor Configuration
-polling_hz: 30
-sensor_name: bottom_center
-connectors:
-    # MPU 6050
-    -   bus: 1
-        address: 0x68
-    # TODO: model 2
-    -   bus: 1
-        address: 0x71
+/**:
+    ros__parameters:
+        # Sensor Configuration
+        polling_hz: 30.0
+        sensor_name: bottom_center
+#       Addresses were: 0x68 and 0x71
+        connectors: ["bus:1,address:104", "bus:1,address:113"]
 
 
-# Calibrations
-ang_vel_offset: [ 0, 0, 0 ]
-accel_offset: [ 0, 0, 0 ]
-temp_offset: 0
+        # Calibrations
+        ang_vel_offset: [ 0.0, 0.0, 0.0 ]
+        accel_offset: [ 0.0, 0.0, 0.0 ]
+        temp_offset: 0.0

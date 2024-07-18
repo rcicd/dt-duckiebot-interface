@@ -1,16 +1,9 @@
-idle:
-  color: [
-    # white on the front, red on the back
-    [1, 1, 1],
-    [1, 0, 0],
-    [0, 0, 0],
-    [1, 0, 0],
-    [1, 1, 1],
-  ]
-  intensity: [
-    0.1,
-    0.2,
-    0.0,
-    0.2,
-    0.1
-  ]
+/**:
+  ros__parameters:
+    idle:
+      # white on the front, red on the back
+      color: ["1 1 1", "1 0 0", "0 0 0", "1 0 0", "1 1 1"]
+      intensity: [0.1, 0.2, 0.0, 0.2, 0.1]
+    power_off:
+      color: ["0 0 0", "0 0 0", "0 0 0", "0 0 0", "0 0 0"]
+      intensity: [0.0, 0.0, 0.0, 0.0, 0.0]

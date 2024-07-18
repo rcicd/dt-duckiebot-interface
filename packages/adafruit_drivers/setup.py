@@ -7,7 +7,8 @@ packages = [
     # 'Adafruit_GPIO',
     'Adafruit_I2C',
     # 'Adafruit_MotorHAT',
-    'Adafruit_PWM_Servo_Driver'
+    'Adafruit_PWM_Servo_Driver',
+    'mpu_adafruit',
 ]
 
 setup(
