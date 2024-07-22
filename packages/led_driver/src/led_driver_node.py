@@ -43,10 +43,11 @@ class LEDDriverNode(Node):
         self.declare_parameter("idle.color", [""])
         self.declare_parameter("idle.intensity", [0.0])
         self.declare_parameter("power_off.color", [""] * 5)
-        _idle_color_string = self.get_parameter("idle.color").get_parameter_value().value
-        _power_off_color_string = self.get_parameter("power_off.color").get_parameter_value().value
-        self._idle_intensity = self.get_parameter("idle.intensity").get_parameter_value().value
-        self._power_off_intensity = self.get_parameter("power_off.intensity").get_parameter_value().value
+        self.declare_parameter("power_off.intensity", [0.0] * 5)
+        _idle_color_string = self.get_parameter("idle.color").value
+        _power_off_color_string = self.get_parameter("power_off.color").value
+        self._idle_intensity = self.get_parameter("idle.intensity").value
+        self._power_off_intensity = self.get_parameter("power_off.intensity").value
         self._idle_color = [[int(value) for value in color.split(" ")] for color in _idle_color_string]
         self._power_off_color = [[int(value) for value in color.split(" ")] for color in _power_off_color_string]
         # initialize LED library
@@ -76,7 +77,7 @@ class LEDDriverNode(Node):
         At shutdown, changes the LED pattern to `LIGHT_OFF`.
         """
         for i in range(5):
-            self.led.set_RGB(i, self._idle_color[i], self._idle_intensity[i])
+            self.led.set_RGB(i, self._power_off_color[i], self._power_off_intensity[i])
         # Turn off the lights when the node dies
         self.get_logger().info("Shutting down. Turning LEDs off.")
         time.sleep(1)

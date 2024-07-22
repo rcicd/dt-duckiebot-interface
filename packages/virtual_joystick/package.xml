@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+    <name>virtual_joystick</name>
+    <version>1.0.0</version>
+    <description>Package for communication with virtual joystick</description>
+
+    <author email="lelikk2002@gmail.com">Ilia Nechaev</author>
+    <maintainer email="lelikk2002@gmail.com">Ilia Nechaeve</maintainer>
+
+    <license>GPLv3</license>
+
+    <export>
+        <build_type>ament_python</build_type>
+    </export>
+
+<!--    <depend>setuptools</depend>-->
+    <depend>rclpy</depend>
+    <depend>sensor_msgs</depend>
+    <depend>duckietown_msgs</depend>
+    <depend>std_msgs</depend>
+    <depend>utils_package</depend>
+</package>

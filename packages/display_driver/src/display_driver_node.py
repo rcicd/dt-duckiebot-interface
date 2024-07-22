@@ -135,9 +135,10 @@ class DisplayNode(Node):
                 # select page
                 self._page = i
 
-        if msg.event == ButtonEventMsg.EVENT_HELD_3SEC:
+        if msg.event == ButtonEventMsg.EVENT_HELD_3SEC or msg.event == ButtonEventMsg.EVENT_HELD_10SEC:
             with self._fragments_lock:
                 self._page = PAGE_SHUTDOWN
+            self._render(None)
 
     def _fragment_cb(self, msg: Any, is_test_cmd: bool = False):
         # when performing hardware test, prevent default handling
@@ -186,7 +187,7 @@ class DisplayNode(Node):
                 data=img, roi=roi, page=msg.page, z=msg.z, _ttl=msg.ttl, _time=self.get_clock().now().to_msg()
             )
         # force refresh if this fragment is on the current page
-        if msg.page == self._page or msg.page == ALL_PAGES:
+        if msg.page == self._page:
             self._render(None)
 
     def _render(self, _=None):
