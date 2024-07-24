@@ -68,7 +68,7 @@ class AbsCameraNode(ABC, Node):
         self.declare_parameter("use_hw_acceleration", False)
 
 
-    # define parameters
+        # define parameters
         # self._framerate.register_update_callback(self.parameters_updated)
         # self._res_w.register_update_callback(self.parameters_updated)
         # self._res_h.register_update_callback(self.parameters_updated)
@@ -218,10 +218,10 @@ class AbsCameraNode(ABC, Node):
     def on_shutdown(self):
         self.stop(force=True)
 
-    def srv_set_camera_info_cb(self, req):
+    def srv_set_camera_info_cb(self, req, response):
         self.get_logger().info("[srv_set_camera_info_cb] Callback!")
         filename = self.cali_file_folder + self.get_namespace().rstrip("/") + ".yaml"
-        response = SetCameraInfo.Response()
+        # response = SetCameraInfo.Response()
         response.success = self.save_camera_info(req.camera_info, filename)
         response.status_message = "Write to %s" % filename
         return response
@@ -242,10 +242,10 @@ class AbsCameraNode(ABC, Node):
             "image_height": camera_info_msg.height,
             "camera_name": self.get_name().lstrip("/").split("/")[0],
             "distortion_model": camera_info_msg.distortion_model,
-            "distortion_coefficients": {"data": camera_info_msg.D, "rows": 1, "cols": 5},
-            "camera_matrix": {"data": camera_info_msg.K, "rows": 3, "cols": 3},
-            "rectification_matrix": {"data": camera_info_msg.R, "rows": 3, "cols": 3},
-            "projection_matrix": {"data": camera_info_msg.P, "rows": 3, "cols": 4},
+            "distortion_coefficients": {"data": camera_info_msg.d.tolist(), "rows": 1, "cols": 5},
+            "camera_matrix": {"data": camera_info_msg.k.tolist(), "rows": 3, "cols": 3},
+            "rectification_matrix": {"data": camera_info_msg.r.tolist(), "rows": 3, "cols": 3},
+            "projection_matrix": {"data": camera_info_msg.p.tolist(), "rows": 3, "cols": 4},
         }
         self.get_logger().info(f"[save_camera_info] calib {calib}")
         try:
